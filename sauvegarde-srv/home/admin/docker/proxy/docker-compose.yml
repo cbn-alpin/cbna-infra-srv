@@ -1,0 +1,55 @@
+version: "3.9"
+
+services:
+  nginx-proxy:
+    image: jwilder/nginx-proxy:latest
+    container_name: nginx-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - conf-storage:/etc/nginx/conf.d
+      - vhost-storage:/etc/nginx/vhost.d
+      - html-storage:/usr/share/nginx/html
+      - dhparam-storage:/etc/nginx/dhparam
+      - certs-storage:/etc/nginx/certs:ro
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: 4m
+        max-file: "10"
+
+  nginx-proxy-letsencrypt:
+    image: jrcs/letsencrypt-nginx-proxy-companion:latest
+    container_name: nginx-proxy-letsencrypt
+    depends_on:
+      - nginx-proxy
+    restart: unless-stopped
+    environment:
+      DEFAULT_EMAIL: adminsys@cbn-alpin.fr
+      NGINX_PROXY_CONTAINER: nginx-proxy
+    volumes:
+      - vhost-storage:/etc/nginx/vhost.d
+      - html-storage:/usr/share/nginx/html
+      - dhparam-storage:/etc/nginx/dhparam:ro
+      - certs-storage:/etc/nginx/certs
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: 2m
+        max-file: "10"
+
+volumes:
+  conf-storage:
+  vhost-storage:
+  html-storage:
+  dhparam-storage:
+  certs-storage:
+
+networks:
+  default:
+    external:
+      name: nginx-proxy
