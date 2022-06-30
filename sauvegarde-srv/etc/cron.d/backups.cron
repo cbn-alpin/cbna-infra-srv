@@ -1,0 +1,19 @@
+# /etc/cron.d/backups: execute all backups tasks
+# Copy this file into /etc/cron.d/ without .cron extension : cp backups.cron /etc/cron.d/backups
+# WARNING: not use "." or "-" in script filename. With this characters, the script will not be
+# executed by Cron !?
+
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+# MAILFROM doesn't work now, use alternative below
+#MAILTO=adminsys@cbn-alpin.fr
+#MAILFROM=mailer@cbn-alpin.fr
+
+# m h dom mon dow user  command
+# Backups instance - Each day at 00:44AM
+0 44 * * * backups PATH=$PATH:/home/backups/bin/ /home/backups/bin/backup_instance.sh -v > /dev/null 2>&1
+
+# Grafana - First day of each month at 00:01AM
+1 0 1 * * admin /usr/bin/docker compose run monitor-grafana-backup 2>&1 | mail -s "[Cron] Backups - Grafana @${HOSTNAME}" adminsys@cbn-alpin.fr
+
+# An empty line is required at the end of this file for a valid cron file.
