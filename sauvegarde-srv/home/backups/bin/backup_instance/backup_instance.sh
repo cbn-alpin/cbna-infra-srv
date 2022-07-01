@@ -87,6 +87,7 @@ function main() {
 
     #+----------------------------------------------------------------------------------------------------------+
 	printInfos
+	createServersList
 	downloadAllSrvBkpImg
 	uploadAllSrvBkpImg
 	removeAllOldSrvBkpImg
@@ -101,14 +102,26 @@ function printInfos() {
 	printVerbose "\tOpenStack Client version:${Whi} $(openstack --version)" ${Gra}
 }
 
+function createServersList() {
+	declare -A -g bsi_servers
+
+	IFS='=; ' read -r -a bsi_servers_list <<< "${bsi_instances_to_backup}"
+	#echo "${bsi_servers_list[*]}"
+	for ((i = 0; i < ${#bsi_servers_list[@]}; i += 2)); do
+    	bsi_servers[${bsi_servers_list[i]}]=${bsi_servers_list[i + 1]}
+	done
+	#printf "%s\n" "${bsi_servers[@]@K}"
+}
+
 function downloadAllSrvBkpImg() {
-	export OS_REGION_NAME="${bsi_source_region_name}"
-
-	prepareStorageDir
-
-	local servers=("${bsi_floresentinelle_srv_backup_name}")
-	for srv in "${servers[@]}"; do
-		downloadSrvImg "${srv}"
+	printMsg "Downloading servers snapshots..."
+	printf "\tSnaphots list: %s\n" "${bsi_servers[@]@K}"
+	for srv_backup_name in "${!bsi_servers[@]}"; do
+		local srv_name="${srv_backup_name%%_*}"
+		printMsg "Downloading ${srv_name^^} server snapshots from ${OS_REGION_NAME} ..."
+		export OS_REGION_NAME="${bsi_servers[$srv_backup_name]}"
+		prepareStorageDir
+		downloadSrvImg "${srv_backup_name}"
 	done
 }
 
@@ -195,11 +208,11 @@ function uploadAllSrvBkpImg() {
 
 function removeAllOldSrvBkpImg() {
 	export OS_REGION_NAME="${bsi_destination_region_name}"
-	printMsg "Removing from ${OS_REGION_NAME} all old instance backup images..."
 
-	local servers=("${bsi_db_srv_backup_name}" "${bsi_web_srv_backup_name}")
-	for srv in "${servers[@]}"; do
-		removeSrvImg "${srv}"
+	for srv_backup_name in "${!bsi_servers[@]}"; do
+		local srv_name="${srv_backup_name%%_*}"
+		printMsg "Removing from ${OS_REGION_NAME} all old ${srv_name^^} server snapshots ..."
+		removeSrvImg "${srv_backup_name}"
 	done
 }
 

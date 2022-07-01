@@ -157,6 +157,14 @@ function printVerbose() {
     fi
 }
 
+# DESC: Load all script config files in right order : default then user settings files
+# ARGS: $1 (optional): module user config file path (default ${conf_dir}/settings.ini). Last loaded config file.
+# OUTS: All variables and constants from default and user config file.
+function loadScriptConfig() {
+    loadDefaultConfig
+    loadUserConfig "${1}"
+}
+
 # DESC: Load default config file
 # ARGS: None
 # OUTS: All variables and constants from default config file.
@@ -183,14 +191,6 @@ function loadUserConfig() {
     else
         printVerbose "User settings config file not found at '${config_path}'"
     fi
-}
-
-# DESC: Load all script config files in right order : default then user settings files
-# ARGS: $1 (optional): module user config file path (default ${conf_dir}/settings.ini). Last loaded config file.
-# OUTS: All variables and constants from default and user config file.
-function loadScriptConfig() {
-    loadDefaultConfig
-    loadUserConfig "${1}"
 }
 
 # DESC: Redirect output
