@@ -6,8 +6,8 @@ services:
     # https://hub.docker.com/_/influxdb
     container_name: monitor-influxdb
     restart: unless-stopped
-    expose:
-      - 8086
+    ports:
+      - 10.0.1.10:8086:8086
     hostname: ${HOSTNAME_INFLUXDB:-influxdb-cbna-infra}
     env_file:
       - ./influxdb/.env
@@ -43,7 +43,7 @@ services:
       --force'
 
   monitor-telegraf:
-    image: telegraf:1.23.0
+    image: telegraf:1.23.3
     # https://hub.docker.com/_/telegraf
     container_name: monitor-telegraf
     env_file:
@@ -57,12 +57,15 @@ services:
       - monitoring
     # To authorize telgraf to access to /run/docker.sock set host docker gid
     # Find docker gid with: stat -c '%g' /var/run/docker.sock
-    # Or run docker-compose like this:
     user: "telegraf:${DOCKER_GID:-997}"
     environment:
-      HOST_PROC: /host/proc
-      HOST_SYS: /host/sys
+      HOSTNAME: ${HOSTNAME:-sauvegarde}
+      HOST_MOUNT_PREFIX: /host
       HOST_ETC: /host/etc
+      HOST_PROC: /host/proc
+      HOST_RUN: /host/run
+      HOST_SYS: /host/sys
+      HOST_VAR: /host/var
       INFLUXDB2_INIT_ORG: ${INFLUXDB2_INIT_ORG}
       INFLUXDB2_INIT_BUCKET: ${INFLUXDB2_INIT_BUCKET}
       INFLUXDB2_TELEGRAF_TOKEN: ${INFLUXDB2_TELEGRAF_TOKEN}
