@@ -11,7 +11,7 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
 # m h dom mon dow user  command
 # Backups instance - Each day at 00:44AM
-0 44 * * * backups /home/backups/bin/backup_instance/backup_instance.sh -v > /dev/null 2>&1
+44 0 * * * backups PATH=$PATH:/home/backups/bin/ /home/backups/bin/backup_instance/backup_instance.sh -v > /dev/null 2>&1
 
 # Grafana - First day of each month at 00:01AM
 1 0 1 * * admin /usr/bin/docker compose run monitor-grafana-backup 2>&1 | mail -s "[Cron] Backups - Grafana @${HOSTNAME}" adminsys@cbn-alpin.fr
