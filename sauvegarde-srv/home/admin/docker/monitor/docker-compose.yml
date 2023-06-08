@@ -2,12 +2,13 @@ version: "3.9"
 
 services:
   monitor-influxdb:
-    image: influxdb:2.2.0
+    image: influxdb:2.7.1
     # https://hub.docker.com/_/influxdb
     container_name: monitor-influxdb
     restart: unless-stopped
     ports:
-      - 10.0.1.10:8086:8086
+      - "10.0.1.10:8086:8086"
+      - "8089:8089/udp"
     hostname: ${HOSTNAME_INFLUXDB:-influxdb-cbna-infra}
     env_file:
       - ./influxdb/.env
@@ -18,66 +19,18 @@ services:
       VIRTUAL_HOST: influxdb.cbn-alpin.fr
       VIRTUAL_PORT: 8086
       LETSENCRYPT_HOST: influxdb.cbn-alpin.fr
+    healthcheck:
+      test: "curl -f http://localhost:8086/ping"
+      interval: 5s
+      timeout: 10s 
+      retries: 5
     volumes:
       - influxdb-storage:/var/lib/influxdb/data
       - data-influxdb2-storage:/var/lib/influxdb2
       - conf-influxdb2-storage:/etc/influxdb2
 
-  monitor-influx-cli:
-    #  Initializes influxdb user/password/bucket...
-    image: influxdb:2.2.0
-    container_name: influx-cli
-    env_file:
-      - ./influxdb/.env
-    networks:
-      - monitoring
-    depends_on:
-      - monitor-influxdb
-    command: sh -c 'sleep 5; influx setup
-      --bucket "${INFLUXDB2_INIT_BUCKET}"
-      --token "${INFLUXDB2_INIT_ADMIN_TOKEN}"
-      --org "${INFLUXDB2_INIT_ORG}"
-      --username=${INFLUXDB2_INIT_USERNAME}
-      --password=${INFLUXDB2_INIT_PASSWORD}
-      --host=http://monitor-influxdb:8086
-      --force'
-
-  monitor-telegraf:
-    image: telegraf:1.24.4
-    # https://hub.docker.com/_/telegraf
-    container_name: monitor-telegraf
-    env_file:
-      - ./influxdb/.env
-      - ./telegraf/.env
-    hostname: ${HOSTNAME:-sauvegarde}
-    restart: unless-stopped
-    depends_on:
-      - monitor-influxdb
-    networks:
-      - monitoring
-    # To authorize telgraf to access to /run/docker.sock set host docker gid
-    # Find docker gid with: stat -c '%g' /var/run/docker.sock
-    user: "telegraf:${DOCKER_GID:-997}"
-    environment:
-      HOSTNAME: ${HOSTNAME:-sauvegarde}
-      HOST_MOUNT_PREFIX: /host
-      HOST_ETC: /host/etc
-      HOST_PROC: /host/proc
-      HOST_PROC_MOUNTINFO: /proc/1
-      HOST_RUN: /host/run
-      HOST_SYS: /host/sys
-      HOST_VAR: /host/var
-      INFLUXDB2_INIT_ORG: ${INFLUXDB2_INIT_ORG}
-      INFLUXDB2_INIT_BUCKET: ${INFLUXDB2_INIT_BUCKET}
-      INFLUXDB2_TELEGRAF_TOKEN: ${INFLUXDB2_TELEGRAF_TOKEN}
-    volumes:
-      - ./telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
-      - /:/host:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /opt/srvstatus/status.json:/opt/srvstatus/status.json
-
   monitor-grafana:
-    image: grafana/grafana:8.5.6
+    image: grafana/grafana:9.5.2
     # https://hub.docker.com/r/grafana/grafana
     container_name: monitor-grafana
     restart: unless-stopped
@@ -94,11 +47,15 @@ services:
       VIRTUAL_HOST: monitor.cbn-alpin.fr
       VIRTUAL_PORT: 3000
       LETSENCRYPT_HOST: monitor.cbn-alpin.fr
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f localhost:3000/api/health && echo 'ready'"]
+      interval: 10s
+      retries: 30
     volumes:
       - grafana-storage:/var/lib/grafana
 
   monitor-grafana-renderer:
-    image: grafana/grafana-image-renderer:3.4.2
+    image: grafana/grafana-image-renderer:3.7.1
     # https://hub.docker.com/r/grafana/grafana-image-renderer
     container_name: monitor-grafana-renderer
     restart: unless-stopped
@@ -110,10 +67,11 @@ services:
       - monitoring
 
   monitor-grafana-backup:
-    image: ysde/docker-grafana-backup-tool:1.2.3
+    image: ysde/docker-grafana-backup-tool:1.3.0
     # https://hub.docker.com/r/ysde/docker-grafana-backup-tool
     container_name: monitor-grafana-backup
     restart: "no"
+    profiles: ["backup"]
     depends_on:
       - monitor-grafana
     networks:
@@ -121,7 +79,10 @@ services:
       - monitoring
     environment:
       - GRAFANA_TOKEN=${GRAFANA_TOKEN}
-      - GRAFANA_URL=http://monitor-grafana:3000
+      - GRAFANA_URL=http://localhost:3000
+      - GRAFANA_ADMIN_ACCOUNT=${GRAFANA_ADMIN_ACCOUNT}
+      - GRAFANA_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+      - VERIFY_SSL=False 
     volumes:
        - ./grafana/backup:/opt/grafana-backup-tool/_OUTPUT_
 

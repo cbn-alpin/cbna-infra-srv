@@ -36,7 +36,7 @@ Il faut donc créer en amont les dossiers racines :
 - Sur l'hôte, passer en root : `sudo -i`
 - Aller dans le dossier de l'utilisateur sur l'hôte : `cd /home/provider/data/`
 - Créer les dossiers qui hébergeront les données à intégrer : `mkdir test`
-- Donner les droits à l'utilisateur correspondant sur l'hôte (*provider* dans notre cas) d'y accéder en lecture et écriture : `chown provider: ./*`
+- Donner les droits à l'utilisateur correspondant sur l'hôte (*provider* dans notre cas) d'y accéder en lecture et écriture : `chown provider:users ./*`
 
 ## Tester la connexion SFTP
 
@@ -52,3 +52,4 @@ Configurer votre client SFTP :
 Tenter de vous connecter et d'uploader un fichier dans un des dossiers préalablement créé.
 
 Normalement, il est impossible d'uploader des fichiers ou de créer de nouveaux dossiers à la racine.
+

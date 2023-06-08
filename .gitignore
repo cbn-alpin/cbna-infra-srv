@@ -1,7 +1,13 @@
 *.conf
+!**/postgresql/**/*.conf
 !**/nginx/*.conf
 !*.sample.conf
 !*.default.conf
-!web-srv/etc/**/*.conf
 .env*
+msmtp.env
 !.env.sample
+*.mmdb
+*.pem
+borgmatic.yml
+ntfy.yml
+aliases.txt

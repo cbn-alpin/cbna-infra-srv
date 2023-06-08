@@ -45,3 +45,4 @@ docker run --rm telegraf:1.18.1 telegraf config | \
 ```shell
  htpasswd -bnBC 10 "" <mot-de-passe-admin> | tr -d ':\n'
 ```
+

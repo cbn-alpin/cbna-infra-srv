@@ -127,6 +127,7 @@ function downloadAllSrvBkpImg() {
 
 function prepareStorageDir() {
     printMsg "Prepare for ${OS_REGION_NAME} the storage dir..."
+	bsi_storage_dir="${bsi_storage_dir}/${OS_REGION_NAME}"
 	if ! [[ -d "${bsi_storage_dir}/" ]]; then
 		mkdir -p "${bsi_storage_dir}/"
 	else

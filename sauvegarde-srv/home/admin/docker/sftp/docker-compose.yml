@@ -6,16 +6,15 @@ services:
     container_name: sftp
     ports:
       - "${HOST_SSH_PORT}:22"
-    networks:
-      - nginx-proxy
     restart: unless-stopped
     volumes:
       - ./ssh_host_ed25519_key:/etc/ssh/ssh_host_ed25519_key:ro
       - ./ssh_host_rsa_key:/etc/ssh/ssh_host_rsa_key:ro
       - ./users.conf:/etc/sftp/users.conf:ro
-      - /home/provider/data:/home/data
-      - /home/provider/data:/home/data-reader:ro
+      - /data/sftp-data:/home/data
+      - /data/sftp-data:/home/data-reader
 
 networks:
-  nginx-proxy:
+  default:
+    name: nginx-proxy
     external: true

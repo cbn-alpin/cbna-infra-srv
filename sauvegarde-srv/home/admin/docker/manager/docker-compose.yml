@@ -3,18 +3,19 @@ version: "3.9"
 services:
   manager-portainer:
     # https://hub.docker.com/r/portainer/portainer-ce
-    image: portainer/portainer-ce:2.15.1
+    image: portainer/portainer-ce:2.18.3
     container_name: "manager-portainer"
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
     expose:
+      - 9443
       - 8000
-      - 9000
     hostname: ${HOSTNAME:-sauvegarde}
     environment:
       VIRTUAL_HOST: ${DOMAIN}
-      VIRTUAL_PORT: 9000
+      VIRTUAL_PORT: 9443
+      VIRTUAL_PROTO: https
       LETSENCRYPT_HOST: ${DOMAIN}
     command: -H unix:///var/run/docker.sock --admin-password '${ENCRYPTED_PASSWORD}'
     volumes:
@@ -30,5 +31,5 @@ volumes:
 
 networks:
   default:
-    external:
-      name: ${NETWORK:-nginx-proxy}
+    name: ${NETWORK:-nginx-proxy}
+    external: true

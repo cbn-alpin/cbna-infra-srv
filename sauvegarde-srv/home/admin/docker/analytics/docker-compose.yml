@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   analytics-nginx:
-    image: nginx:1.22.0
+    image: nginx:1.24.0-bullseye
     # https://hub.docker.com/_/nginx
     container_name: analytics-nginx
     restart: unless-stopped
@@ -21,7 +21,7 @@ services:
     build:
       context: ./matomo/build
       dockerfile: Dockerfile
-    image: matomo:4.10.1-fpm
+    image: matomo:4.14.2-fpm
     # https://hub.docker.com/_/matomo
     container_name: analytics-matomo
     restart: unless-stopped
@@ -43,7 +43,7 @@ services:
       - matomo-storage:/var/www/html
 
   analytics-mariadb:
-    image: mariadb:10.6.8
+    image: mariadb:10.11.3
     # https://hub.docker.com/_/mariadb
     container_name: analytics-mariadb
     restart: unless-stopped
@@ -68,5 +68,5 @@ volumes:
 
 networks:
   default:
-    external:
-      name: nginx-proxy
+    name: nginx-proxy
+    external: true
