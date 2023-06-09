@@ -118,8 +118,10 @@ function downloadAllSrvBkpImg() {
 	printf "\tSnaphots list: %s\n" "${bsi_servers[@]@K}"
 	for srv_backup_name in "${!bsi_servers[@]}"; do
 		local srv_name="${srv_backup_name%%_*}"
-		printMsg "Downloading ${srv_name^^} server snapshots from ${OS_REGION_NAME} ..."
 		export OS_REGION_NAME="${bsi_servers[$srv_backup_name]}"
+		bsi_storage_dir="${bsi_storage_dir_base}/${OS_REGION_NAME}"
+
+		printMsg "Downloading ${srv_name^^} server snapshots from ${OS_REGION_NAME} ..."
 		prepareStorageDir
 		downloadSrvImg "${srv_backup_name}"
 	done
@@ -127,7 +129,6 @@ function downloadAllSrvBkpImg() {
 
 function prepareStorageDir() {
     printMsg "Prepare for ${OS_REGION_NAME} the storage dir..."
-	bsi_storage_dir="${bsi_storage_dir}/${OS_REGION_NAME}"
 	if ! [[ -d "${bsi_storage_dir}/" ]]; then
 		mkdir -p "${bsi_storage_dir}/"
 	else
