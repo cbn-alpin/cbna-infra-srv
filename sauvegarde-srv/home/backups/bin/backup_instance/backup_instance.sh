@@ -128,21 +128,21 @@ function downloadAllSrvBkpImg() {
 }
 
 function prepareStorageDir() {
-    printMsg "Prepare for ${OS_REGION_NAME} the storage dir..."
+    printMsg "\tPrepare for ${OS_REGION_NAME} the storage dir..."
 	if ! [[ -d "${bsi_storage_dir}/" ]]; then
 		mkdir -p "${bsi_storage_dir}/"
 	else
-		printPretty "\tStorage dir already exists at: ${bsi_storage_dir}" ${Gra}
+		printPretty "\t\tStorage dir already exists at: ${bsi_storage_dir}" ${Gra}
 	fi
 
 	cd "${bsi_storage_dir}"
 
-	printVerbose "\tSearching files to delete..."
+	printVerbose "\t\tSearching files to delete..."
 	if [[ -z ${stop_all-} ]] && [[ -z ${stop_download-} ]]; then
-		local msg="\t\t%f (DELETED)\n"
+		local msg="\t\t\t %f (DELETED)\n"
 		find "${bsi_storage_dir}/" -name "*.${bsi_img_ext}" -type f -mmin +720 -printf "${msg}" -exec rm {} \;
 	else
-		local msg="\t\t %f (NOT deleted)\n"
+		local msg="\t\t\t %f (NOT deleted)\n"
 		find "${bsi_storage_dir}/" -name "*.${bsi_img_ext}" -type f -mmin +720 -printf "${msg}"
 	fi
 }
@@ -158,7 +158,7 @@ function downloadSrvImg() {
 	local srv_backup_name="${1}"
 	local srv_name="${srv_backup_name%%_*}"
 
-	printMsg "Extract from ${OS_REGION_NAME} the ${srv_name^^} last image id and date..."
+	printMsg "\tExtract from ${OS_REGION_NAME} the ${srv_name^^} last image id and date..."
 	local id=""
 	local max_date=""
 	local last_img_id=""
@@ -171,11 +171,11 @@ function downloadSrvImg() {
 			last_img_id="${id//[$'\r\n']}"
 		fi
 	done
-	printVerbose "\tMax date: ${max_date} => Img id: ${last_img_id}"
+	printVerbose "\t\tMax date: ${max_date} => Img id: ${last_img_id}"
 
-	printMsg "Download from ${OS_REGION_NAME} the ${srv_name^^} instance backup image..."
+	printMsg "\tDownload from ${OS_REGION_NAME} the ${srv_name^^} instance backup image..."
 	img_file_path="${bsi_storage_dir}/${max_date%T*}_${srv_backup_name%%_*}.${bsi_img_ext}"
-	printVerbose "\tDownload ${last_img_id} to ${img_file_path}"
+	printVerbose "\t\tDownload ${last_img_id} to ${img_file_path}"
 	if [[ -z ${stop_all-} ]] && [[ -z ${stop_download-} ]]; then
 		openstack image save --file "${img_file_path}" "${last_img_id}"
 	fi
@@ -185,26 +185,35 @@ function uploadAllSrvBkpImg() {
 	export OS_REGION_NAME="${bsi_destination_region_name}"
 
 	printMsg "Upload to ${OS_REGION_NAME} all instance backup images ..."
-	local img_file_path=""
-	find "${bsi_storage_dir}/" -name "*.${bsi_img_ext}" -type f -print0 | while read -d $'\0' img_file_path; do
-		local image_file_name="${img_file_path##*/}"
-		local image_upload_name="${image_file_name%.*}"
-		local image_srv="${image_upload_name##*_}"
-		local found_img_id=$(openstack image list --name "${image_upload_name}" -c ID -f value | tr -d '\n')
-		if [[ -z ${found_img_id-} ]]; then
-			printVerbose "\tUpload to ${OS_REGION_NAME} image ${img_file_path} with name ${image_upload_name} and tag ${image_srv}"
-			if [[ -z ${stop_all-} ]] && [[ -z ${stop_upload-} ]]; then
-				openstack image create \
-					--private \
-					--disk-format "${bsi_img_ext}" \
-					--container-format bare \
-					--tag "${image_srv}" \
-					--file "${img_file_path}" \
-					"${image_upload_name}"
+	# Extract unique regions
+	local region=""
+	local regions=($(for region in "${bsi_servers[@]}"; do echo "${region}"; done | sort -u))
+
+    local origin_region_name=""
+	for origin_region_name in "${regions[@]}"; do
+        local storage_dir="${bsi_storage_dir_base}/${origin_region_name}"
+		local img_file_path=""
+
+		find "${storage_dir}/" -name "*.${bsi_img_ext}" -type f -print0 | while read -d $'\0' img_file_path; do
+			local image_file_name="${img_file_path##*/}"
+			local image_upload_name="${image_file_name%.*}"
+			local image_srv="${image_upload_name##*_}"
+			local found_img_id=$(openstack image list --name "${image_upload_name}" -c ID -f value | tr -d '\n')
+			if [[ -z ${found_img_id-} ]]; then
+				printVerbose "\tUpload to ${OS_REGION_NAME} image ${img_file_path} with name ${image_upload_name} and tag ${image_srv}"
+				if [[ -z ${stop_all-} ]] && [[ -z ${stop_upload-} ]]; then
+					openstack image create \
+						--private \
+						--disk-format "${bsi_img_ext}" \
+						--container-format bare \
+						--tag "${image_srv}" \
+						--file "${img_file_path}" \
+						"${image_upload_name}"
+				fi
+			else
+				printVerbose "\t${image_upload_name} already exist with id ${found_img_id} (nothing to do)"
 			fi
-		else
-			printVerbose "\t${image_upload_name} already exist with id ${found_img_id} (nothing to do)"
-		fi
+		done
 	done
 }
 
