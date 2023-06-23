@@ -22,7 +22,7 @@ services:
     healthcheck:
       test: "curl -f http://localhost:8086/ping"
       interval: 5s
-      timeout: 10s 
+      timeout: 10s
       retries: 5
     volumes:
       - influxdb-storage:/var/lib/influxdb/data
@@ -82,7 +82,7 @@ services:
       - GRAFANA_URL=http://localhost:3000
       - GRAFANA_ADMIN_ACCOUNT=${GRAFANA_ADMIN_ACCOUNT}
       - GRAFANA_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
-      - VERIFY_SSL=False 
+      - VERIFY_SSL=False
     volumes:
        - ./grafana/backup:/opt/grafana-backup-tool/_OUTPUT_
 
