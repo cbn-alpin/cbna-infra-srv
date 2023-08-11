@@ -1,5 +1,7 @@
 *.conf
-!**/postgresql/**/*.conf
+**/restore/*.sql
+**/webhook/hooks.json
+!**/postgres/**/*.conf
 !**/nginx/*.conf
 !*.sample.conf
 !*.default.conf
