@@ -2,9 +2,4 @@
 set -e
 
 docker pull $IMAGE
-docker stop $REPOSITORY || true
-docker rm $REPOSITORY || true
-docker run -d \
-  --restart unless-stopped \
-  --name $REPOSITORY \
-  $IMAGE
+docker compose up -d --no-deps $REPOSITORY || true

@@ -47,7 +47,7 @@ services:
 
   gefiproj-postgres-restore:
     # Usage: docker compose run --rm gefiproj-postgres-restore /restore/restore.sh -d "2023-08-10_backup_dbprod.sql"
-    image: postgres:15.3-bookworm}
+    image: postgres:15.3-bookworm
     container_name: gefiproj-postgres-restore
     restart: "no"
     profiles: ["restore"]
@@ -106,7 +106,6 @@ services:
     expose:
       - 9000
     environment:
-      TZ: ${TZ:-Europe/Paris}
       VIRTUAL_HOST: ${WEBHOOK_DOMAIN}
       LETSENCRYPT_HOST: ${WEBHOOK_DOMAIN}
     healthcheck:
@@ -122,6 +121,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./webhook/hooks.json:/etc/webhook/hooks.json
       - ./webhook/scripts/:/var/scripts/:ro
+      - ./../:/var/docker-repos/:ro
 
   gefiproj-api:
     image: cbna/gefiproj-api:main
@@ -133,14 +133,11 @@ services:
     expose:
       - 5000
     environment:
+      TZ: ${TZ:-Europe/Paris}
       VIRTUAL_HOST: "${GEFIPROJ_DOMAIN_API}"
       LETSENCRYPT_HOST: "${GEFIPROJ_DOMAIN_API}"
-    healthcheck:
-      test: ["CMD", "ping localhost:80 || exit 1"]
-      interval: 10s
-      timeout: 10s
-      start_period: 30s
-      retries: 3
+    env_file:
+      - .env.api
     logging: *default-logging
     volumes:
       - config-api-storage:/home/app/web/config/
@@ -155,13 +152,13 @@ services:
     depends_on:
       - gefiproj-api
     environment:
+      TZ: ${TZ:-Europe/Paris}
       VIRTUAL_HOST: "${GEFIPROJ_DOMAIN_WEB}"
       LETSENCRYPT_HOST: "${GEFIPROJ_DOMAIN_WEB}"
     healthcheck:
-      test: ["CMD-SHELL", "ping localhost:80 || exit 1"]
+      test: curl --fail --silent http://localhost:80/ || exit 1
       interval: 10s
       timeout: 10s
-      start_period: 30s
       retries: 3
     logging: *default-logging
 

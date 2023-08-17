@@ -3,9 +3,16 @@ FROM almir/webhook:2.8.1 AS source
 
 FROM alpine:3.18.3
 
-COPY --from=source /usr/local/bin/webhook /usr/local/bin/webhook
+ARG TZ=${TZ:-Europe/Paris}
 
-RUN  apk --update --upgrade add docker curl bash && \
+ENV DEFAULT_TZ ${TZ}
+
+COPY --from=source /usr/local/bin/webhook /usr/local/bin/webhook
+COPY ./bashrc.sh /root/.bashrc
+
+RUN  apk --update --upgrade add docker docker-compose curl bash tzdata && \
+	cp /usr/share/zoneinfo/${DEFAULT_TZ} /etc/localtime && \
+	apk del tzdata && \
 	rm -rf /var/cache/apk/*
 
 WORKDIR     /etc/webhook

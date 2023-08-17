@@ -86,7 +86,7 @@ function main() {
 # ARGS: $@ (optional): Arguments provided to the script
 # OUTS: variable grs_dump_file indicating command-line parameters and options
 function setConstants() {
-    readonly grs_dump_file="${setting_dump_file-${POSTGRES_RESTORE_FILE-'gefiproj_dbprod.dump'}}"
+    readonly grs_dump_file="${setting_dump_file-${POSTGRES_RESTORE_FILE-'gefiproj_proddb.dump'}}"
     readonly grs_pgrestore_log="/restore/$(date +"%Y-%m-%d")_pgrestore.log"
 }
 
@@ -104,11 +104,11 @@ function restoreDbDump() {
     # Define the database to restore
     local db_to_restore=""
     if [[ "${grs_dump_file}" =~ .*"proddb".* ]]; then
-        db_to_restore="dbprod"
+        db_to_restore="proddb"
     elif [[ "${grs_dump_file}" =~ .*"devdb".* ]]; then
         db_to_restore="devdb"
     else
-        printExit "Unknown database name in ${grs_dump_file} ! Known : proddb, devdb."
+        exitScript "Unknown database name in ${grs_dump_file} ! Known : proddb, devdb."
     fi
 
     # Remove previously loaded database
