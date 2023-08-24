@@ -1,0 +1,1 @@
+return 302 $scheme://gefiproj.cbn-alpin.fr$request_uri;
