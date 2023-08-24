@@ -45,12 +45,12 @@ services:
       - socket-postgres-storage:/var/run/postgresql
     command: postgres -c config_file=/etc/postgresql/postgresql.conf
 
-  gefiproj-postgres-restore:
+  gefiproj-postgres-cli:
     # Usage:
-    #  - with default command for this service(see below): `docker compose run --rm gefiproj-postgres-restore`
-    #  - specify a command: `docker compose run --rm gefiproj-postgres-restore /restore/restore.sh -d "2023-08-17_backup_dbprod.sql"`
+    #  - create a dump: `docker compose run --rm gefiproj-postgres-cli /backups/backup.sh`
+    #  - restore a dump: `docker compose run --rm gefiproj-postgres-cli /restore/restore.sh -d "2023-08-17_backup_dbprod.sql"`
     image: postgres:15.3-bookworm
-    container_name: gefiproj-postgres-restore
+    container_name: gefiproj-postgres-cli
     restart: "no"
     profiles: ["restore"]
     depends_on:
@@ -64,9 +64,9 @@ services:
       POSTGRES_PORT: ${POSTGRES_PORT}
       POSTGRES_RESTORE_FILE: ${POSTGRES_RESTORE_FILE}
     volumes:
+      - ${POSTGRES_BACKUPS_DIR-./postgres/backups}:/backups/
       - ${POSTGRES_RESTORE_DIR-./postgres/restore}:/restore/
       - socket-postgres-storage:/var/run/postgresql
-    command: /restore/restore.sh -d "${POSTGRES_RESTORE_FILE}"
 
   gefiproj-pgadmin:
     image: dpage/pgadmin4:7.5
