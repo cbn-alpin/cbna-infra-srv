@@ -1,0 +1,124 @@
+version: "3.9"
+
+x-logging:
+  &default-logging
+  driver: "json-file"
+  options:
+    max-size: 4m
+    max-file: 10
+
+x-depends_on:
+  &default-depends_on
+  wiki-jardinalp-mariadb:
+    condition: service_healthy
+
+services:
+
+  wiki-jardinalp-nginx:
+    image: nginx:1.24.0-bullseye
+    container_name: wiki-jardinalp-nginx
+    hostname: "${HOSTNAME}_wiki-jardinalp-nginx"
+    restart: unless-stopped
+    depends_on:
+      << : *default-depends_on
+      wiki-jardinalp-php:
+        condition: service_healthy
+    expose:
+      - 80
+    environment:
+      TZ: ${TZ:-Europe/Paris}
+      VIRTUAL_HOST: "${YW_DOMAIN_ALL}"
+      LETSENCRYPT_HOST: "${YW_DOMAIN_ALL}"
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail http://localhost:9090/nginx_status || exit 1"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+    logging: *default-logging
+    volumes:
+      - ./nginx/conf.d/status.conf:/etc/nginx/conf.d/status.conf:ro
+      - ./nginx/conf.d/jardinalp.conf:/etc/nginx/templates/default.conf.template
+      - root-jardinalp-wiki-storage:/var/www/html
+
+  wiki-jardinalp-php:
+    build:
+      context: ./yeswiki/build/
+      dockerfile: Dockerfile
+      args:
+        TZ: ${TZ:-Europe/Paris}
+        MARIADB_DB: "${MARIADB_DB}"
+        MARIADB_USER: "${MARIADB_USER}"
+        MARIADB_PASSWORD: "${MARIADB_PASSWORD}"
+        YW_NAME: "${YW_NAME}"
+        YW_BASE_URL: "${YW_BASE_URL}"
+        YW_BACKUP_DATE: "${YW_BACKUP_DATE-None}"
+        YW_DB_TABLE_PREFIX: "${YW_DB_TABLE_PREFIX}"
+        YW_VERSION_NAME: "${YW_VERSION_NAME}"
+        YW_VERSION_CODE: "${YW_VERSION_CODE}"
+        YW_VERSION_CHECKSUM: "${YW_VERSION_CHECKSUM}"
+    image: yeswiki:cercopitheque
+    container_name: wiki-jardinalp-php
+    hostname: "${HOSTNAME}_wiki-jardinalp-php"
+    restart: unless-stopped
+    depends_on: *default-depends_on
+    expose:
+      - 9000
+    logging: *default-logging
+    volumes:
+      - root-jardinalp-wiki-storage:/var/www/html
+      - ./backups/:/backups/
+      #- ./yeswiki/wakka.config.php:/var/www/html/wakka.config.php
+      #- ./yeswiki/themes:/var/www/html/themes
+
+  wiki-jardinalp-mariadb:
+    image: mariadb:11.1.2-jammy
+    # https://hub.docker.com/_/mariadb
+    container_name: wiki-jardinalp-mariadb
+    hostname: "${HOSTNAME}_wiki-jardinalp-mariadb"
+    restart: unless-stopped
+    env_file: .env
+    expose:
+      - 3306
+    environment:
+      MARIADB_ROOT_PASSWORD: "${MARIADB_ROOT_PASSWORD}"
+      MARIADB_DATABASE: "${MARIADB_DB}"
+      MARIADB_USER: "${MARIADB_USER}"
+      MARIADB_PASSWORD: "${MARIADB_PASSWORD}"
+      # See : https://github.com/docker-library/mariadb/issues/160
+      MARIADB_INITDB_SKIP_TZINFO: "yes"
+    healthcheck:
+      test: ["CMD-SHELL", "healthcheck.sh --connect --innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    logging: *default-logging
+    volumes:
+      - db-jardinalp-wiki-storage:/var/lib/mysql
+      - ./mariadb/initdb/:/docker-entrypoint-initdb.d/
+      - ./backups/:/backups/
+
+  wiki-jardinalp-adminer:
+    image: adminer:4.8.1-standalone
+    # https://hub.docker.com/_/adminer
+    container_name: wiki-jardinalp-adminer
+    hostname: "${HOSTNAME}_wiki-jardinalp-adminer"
+    restart: unless-stopped
+    expose:
+      - 8080
+    depends_on: *default-depends_on
+    environment:
+      TZ: ${TZ:-Europe/Paris}
+      VIRTUAL_HOST: "${ADMINER_DOMAIN}"
+      LETSENCRYPT_HOST: "${ADMINER_DOMAIN}"
+      ADMINER_DESIGN: lucas-sandery
+      ADMINER_DEFAULT_SERVER: wiki-jardinalp-mariadb
+    logging: *default-logging
+
+volumes:
+  root-jardinalp-wiki-storage:
+  db-jardinalp-wiki-storage:
+
+networks:
+  default:
+    name: nginx-proxy
+    external: true
