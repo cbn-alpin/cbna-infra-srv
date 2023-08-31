@@ -1,0 +1,88 @@
+version: "3.9"
+
+services:
+
+  wiki-sinp-nginx:
+    image: nginx:1.24.0-bullseye
+    # https://hub.docker.com/_/nginx
+    container_name: wiki-sinp-nginx
+    restart: unless-stopped
+    expose:
+      - 80
+    depends_on:
+      - wiki-sinp-dokuwiki
+    environment:
+      VIRTUAL_HOST: "${WIKI_DOMAIN}"
+      LETSENCRYPT_HOST: "${WIKI_DOMAIN}"
+    volumes:
+      - ./nginx/app.conf:/etc/nginx/conf.d/default.conf:ro
+      - root-sinp-dokuwiki-storage:/var/www/html
+      - data-sinp-dokuwiki-storage:/var/www/html/data
+      - plugins-sinp-dokuwiki-storage:/var/www/html/lib/plugins/
+      - conf-sinp-dokuwiki-storage:/var/www/html/conf
+      - tpl-sinp-dokuwiki-storage:/var/www/html/lib/tpl/
+
+  wiki-sinp-dokuwiki:
+    build:
+      context: ./dokuwiki/build
+      dockerfile: Dockerfile
+      args:
+        # To load backups, uncomment line in dockerfile and set a date instead of "None"
+        BACKUP_DATE: "${BACKUP_DATE}"
+        MSMTP_OVH_PWD: "${MSMTP_OVH_PWD}"
+    image: dokuwiki:8.1.22-fpm-bookworm
+    # https://hub.docker.com/_/php
+    container_name: wiki-sinp-dokuwiki
+    env_file: .env
+    restart: unless-stopped
+    expose:
+      - 9000
+    volumes:
+      - root-sinp-dokuwiki-storage:/var/www/html
+      - data-sinp-dokuwiki-storage:/var/www/html/data
+      - plugins-sinp-dokuwiki-storage:/var/www/html/lib/plugins/
+      - conf-sinp-dokuwiki-storage:/var/www/html/conf
+      - tpl-sinp-dokuwiki-storage:/var/www/html/lib/tpl/
+
+  wiki-sinp-volumerize:
+    image: blacklabelops/volumerize:1.7.1
+    # https://hub.docker.com/r/blacklabelops/volumerize/tags
+    container_name: wiki-sinp-volumerize
+    restart: unless-stopped
+    environment:
+      # Stop containers before backups
+      - VOLUMERIZE_CONTAINERS=wiki-sinp-nginx wiki-sinp-dokuwiki
+      # Local backups on Host
+      - VOLUMERIZE_SOURCE1=/source
+      - VOLUMERIZE_TARGET1=file:///backups
+      - VOLUMERIZE_CACHE1=/volumerize-cache/local
+      # Schedule backups
+      - TZ=Europe/Paris
+      - VOLUMERIZE_JOBBER_TIME=0 0 3 * * *
+      - VOLUMERIZE_FULL_IF_OLDER_THAN=7D
+      #- VOLUMERIZE_DUPLICITY_OPTIONS=--dry-run
+      # Remove old backups
+      - JOB_NAME2=RemoveOldBackups
+      - JOB_COMMAND2=/etc/volumerize/remove-older-than 7D --force
+      - JOB_TIME2=0 15 0 * * *
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./backups/:/backups
+      - local-sinp-backup-cache-storage:/volumerize-cache/local
+      - data-sinp-dokuwiki-storage:/source/wiki-sinp-data:ro
+      - plugins-sinp-dokuwiki-storage:/source/wiki-sinp-plugins:ro
+      - conf-sinp-dokuwiki-storage:/source/wiki-sinp-conf:ro
+      - tpl-sinp-dokuwiki-storage:/source/wiki-sinp-tpl:ro
+
+volumes:
+  root-sinp-dokuwiki-storage:
+  data-sinp-dokuwiki-storage:
+  plugins-sinp-dokuwiki-storage:
+  conf-sinp-dokuwiki-storage:
+  tpl-sinp-dokuwiki-storage:
+  local-sinp-backup-cache-storage:
+
+networks:
+  default:
+    name: nginx-proxy
+    external: true

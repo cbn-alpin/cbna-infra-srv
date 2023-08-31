@@ -1,0 +1,83 @@
+version: "3.9"
+
+services:
+
+  wiki-intranet-nginx:
+    image: nginx:1.24.0-bullseye
+    # https://hub.docker.com/_/nginx
+    container_name: wiki-intranet-nginx
+    hostname: "${HOSTNAME}_wiki-intranet-nginx"
+    restart: unless-stopped
+    expose:
+      - 80
+    depends_on:
+      - wiki-intranet-dokuwiki
+    environment:
+      TZ: ${TZ:-Europe/Paris}
+      VIRTUAL_HOST: "${WIKI_DOMAIN}"
+      LETSENCRYPT_HOST: "${WIKI_DOMAIN}"
+    volumes:
+      - ./nginx/app.conf:/etc/nginx/conf.d/default.conf:ro
+      - root-intranet-dokuwiki-storage:/var/www/html
+      - data-intranet-dokuwiki-storage:/var/www/html/data
+      - plugins-intranet-dokuwiki-storage:/var/www/html/lib/plugins/
+      - conf-intranet-dokuwiki-storage:/var/www/html/conf
+      - tpl-intranet-dokuwiki-storage:/var/www/html/lib/tpl/
+
+  wiki-intranet-dokuwiki:
+    build:
+      context: ./dokuwiki/build
+      dockerfile: Dockerfile
+      args:
+        # To load backups, uncomment line in dockerfile and set a date instead of "None"
+        BACKUP_DATE: "${BACKUP_DATE}"
+        MSMTP_OVH_PWD: "${MSMTP_OVH_PWD}"
+    image: dokuwiki:8.1.22-fpm-bookworm
+    # https://hub.docker.com/_/php
+    container_name: wiki-intranet-dokuwiki
+    hostname: "${HOSTNAME}_wiki-intranet-dokuwiki"
+    env_file: .env
+    environment:
+      TZ: ${TZ:-Europe/Paris}
+    restart: unless-stopped
+    expose:
+      - 9000
+    volumes:
+      - root-intranet-dokuwiki-storage:/var/www/html
+      - data-intranet-dokuwiki-storage:/var/www/html/data
+      - plugins-intranet-dokuwiki-storage:/var/www/html/lib/plugins/
+      - conf-intranet-dokuwiki-storage:/var/www/html/conf
+      - tpl-intranet-dokuwiki-storage:/var/www/html/lib/tpl/
+
+  wiki-intranet-cli:
+    # Usage:
+    #  - create a dump: `docker compose run --rm wiki-intranet-cli /backups/backup.sh`
+    image: dokuwiki:8.1.22-fpm-bookworm
+    container_name:  wiki-intranet-cli
+    hostname: "${HOSTNAME}_wiki-intranet-cli"
+    restart: "no"
+    profiles: ["restore"]
+    depends_on:
+      - wiki-intranet-dokuwiki
+    env_file: .env
+    environment:
+      TZ: ${TZ:-Europe/Paris}
+    volumes:
+      - ./backups/:/backups/
+      - root-intranet-dokuwiki-storage:/var/www/html
+      - data-intranet-dokuwiki-storage:/var/www/html/data
+      - plugins-intranet-dokuwiki-storage:/var/www/html/lib/plugins/
+      - conf-intranet-dokuwiki-storage:/var/www/html/conf
+      - tpl-intranet-dokuwiki-storage:/var/www/html/lib/tpl/
+
+volumes:
+  root-intranet-dokuwiki-storage:
+  data-intranet-dokuwiki-storage:
+  plugins-intranet-dokuwiki-storage:
+  conf-intranet-dokuwiki-storage:
+  tpl-intranet-dokuwiki-storage:
+
+networks:
+  default:
+    name: nginx-proxy
+    external: true

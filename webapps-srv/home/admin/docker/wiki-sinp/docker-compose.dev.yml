@@ -1,0 +1,18 @@
+# Run locally for tests and development
+#
+# How to use : `docker-compose -f docker-compose.yml -f docker-compose.dev.yml up`
+
+version: "3.9"
+
+services:
+  wiki-sinp-nginx:
+    hostname: wiki-sinp-nginx
+    command: [nginx-debug, '-g', 'daemon off;']
+
+  wiki-sinp-dokuwiki:
+    hostname: wiki-sinp-dokuwiki
+    env_file: .env
+
+  wiki-sinp-volumerize:
+    restart: "no"
+    entrypoint: ["echo", "Service wiki-sinp-volumerize disabled"]

@@ -1,0 +1,43 @@
+version: "3.9"
+
+# To restore :
+#   1. Stop container : docker compose stop wiki-sinp-volumerize
+#   2. Verify diff : docker compose -f docker-compose.restore.yml run wiki-sinp-volumerize-restore-from-local verify
+#   3. To restore execute : docker compose -f docker-compose.restore.yml run wiki-sinp-volumerize-restore-from-local restore
+#   4. Only if necessary, restart containers : docker compose restart wiki-sinp-nginx wiki-sinp-dokuwiki wiki-sinp-volumerize
+#   5. Check restoration
+services:
+  wiki-sinp-volumerize-restore-from-local:
+    image: blacklabelops/volumerize:1.7.1
+    # https://hub.docker.com/r/blacklabelops/volumerize/tags
+    container_name: wiki-sinp-volumerize-restore-from-local
+    restart: "no"
+    environment:
+      # Stop containers before backups
+      - VOLUMERIZE_CONTAINERS=wiki-sinp-nginx wiki-sinp-dokuwiki wiki-sinp-volumerize
+      # Local backups on Host
+      - VOLUMERIZE_SOURCE=/source
+      - VOLUMERIZE_TARGET=file:///backups
+      - VOLUMERIZE_CACHE=/volumerize-cache/local
+      #- VOLUMERIZE_DUPLICITY_OPTIONS=--dry-run
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./backups/:/backups:ro
+      - local-sinp-backup-cache-storage:/volumerize-cache/local
+      - data-sinp-dokuwiki-storage:/source/wiki-sinp-data
+      - plugins-sinp-dokuwiki-storage:/source/wiki-sinp-plugins
+      - conf-sinp-dokuwiki-storage:/source/wiki-sinp-conf
+      - tpl-sinp-dokuwiki-storage:/source/wiki-sinp-tpl
+    command: verify
+
+volumes:
+  local-sinp-backup-cache-storage:
+  data-sinp-dokuwiki-storage:
+  plugins-sinp-dokuwiki-storage:
+  conf-sinp-dokuwiki-storage:
+  tpl-sinp-dokuwiki-storage:
+
+networks:
+  default:
+    name: nginx-proxy
+    external: true

@@ -1,0 +1,14 @@
+# Run locally for tests and development
+#
+# How to use : `docker-compose -f docker-compose.yml -f docker-compose.dev.yml up`
+
+version: "3.9"
+
+services:
+  wiki-intranet-nginx:
+    hostname: wiki-intranet-nginx
+    command: [nginx-debug, '-g', 'daemon off;']
+
+  wiki-intranet-dokuwiki:
+    hostname: wiki-intranet-dokuwiki
+    env_file: .env
