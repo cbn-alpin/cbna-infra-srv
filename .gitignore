@@ -3,6 +3,7 @@
 **/webhook/hooks.json
 !**/postgres/**/*.conf
 !**/nginx/*.conf
+!**/nginx/conf.d/*.conf
 !*.sample.conf
 !*.default.conf
 .env*
