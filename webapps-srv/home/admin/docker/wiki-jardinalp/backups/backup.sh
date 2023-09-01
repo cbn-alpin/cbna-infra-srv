@@ -6,6 +6,9 @@ type="${1:-files}"
 
 if [[ "${type}" = "files" ]]; then
 	# Usage: docker compose exec wiki-jardinalp-php /backups/backup.sh 'files'
+
+	find  /backups/ -type f -name '*.backup.tar.bz2' -execdir rm -- '{}' \;
+
 	tar jcvf /backups/$(date +"%Y-%m-%d")_wiki-jardinalp_files.backup.tar.bz2 \
 		/var/www/html/files
 
@@ -17,13 +20,12 @@ if [[ "${type}" = "files" ]]; then
 
 	tar jcvf /backups/$(date +"%Y-%m-%d")_wiki-jardinalp_photos.backup.tar.bz2 \
 		/var/www/html/map
-
-	find  /backups/ -type f -mtime +1 -name '*.backup.tar.bz2' -execdir rm -- '{}' \;
 elif [[ "${type}" = "database" ]]; then
 	# Usage: source .env && docker compose exec wiki-jardinalp-mariadb /backups/backup.sh 'database'
-	mariadb-dump -uroot -p${MARIADB_ROOT_PASSWORD} --all-databases > /backups/$(date +"%Y-%m-%d")_wiki-jardinalp.dump.sql
 
-	find  /backups/ -type f -mtime +1 -name '*.dump.sql' -execdir rm -- '{}' \;
+	find  /backups/ -type f -name '*.dump.sql' -execdir rm -- '{}' \;
+
+	mariadb-dump -uroot -p${MARIADB_ROOT_PASSWORD} --all-databases > /backups/$(date +"%Y-%m-%d")_wiki-jardinalp.dump.sql
 else
 	echo 1>&2 "Argument must be: 'database' or 'files'";
 	exit 1;
