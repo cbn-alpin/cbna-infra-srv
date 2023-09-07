@@ -1,0 +1,36 @@
+version: "3.9"
+
+x-logging:
+  &default-logging
+  driver: "json-file"
+  options:
+    max-size: 4m
+    max-file: 10
+
+services:
+
+  icono-home-nginx:
+    image: nginx:1.24.0-bullseye
+    container_name: icono-home-nginx
+    hostname: "${HOSTNAME}_icono-home-nginx"
+    restart: unless-stopped
+    expose:
+      - 80
+    environment:
+      TZ: ${TZ:-Europe/Paris}
+      VIRTUAL_HOST: "${DOMAINS}"
+      LETSENCRYPT_HOST: "${DOMAINS}"
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail http://localhost:9090/nginx_status || exit 1"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+    logging: *default-logging
+    volumes:
+      - ./nginx/conf.d/status.conf:/etc/nginx/conf.d/status.conf:ro
+      - ./nginx/html/:/usr/share/nginx/html/
+
+networks:
+  default:
+    name: nginx-proxy
+    external: true
