@@ -1,0 +1,16 @@
+# /etc/cron.d/backup: execute all backups tasks
+# Copy this file into /etc/cron.d/ without .cron extension : cp backup.cron /etc/cron.d/backup
+# WARNING: not use "." or "-" in script filename. With this characters, the script will not be
+# executed by Cron !?
+
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+# MAILFROM doesn't work now, use alternative below
+#MAILTO=adminsys@cbn-alpin.fr
+#MAILFROM=mailer@cbn-alpin.fr
+
+# m h dom mon dow user  command
+# Launch script backup.sh
+1 0 * * * root /usr/local/sbin/backup.sh > /var/log/cron.log 2>&1
+
+# An empty line is required at the end of this file for a valid cron file.
