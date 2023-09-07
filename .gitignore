@@ -6,6 +6,7 @@
 !**/nginx/conf.d/*.conf
 !*.sample.conf
 !*.default.conf
+!*.tpl.conf
 .env*
 msmtp.env
 !.env.sample
