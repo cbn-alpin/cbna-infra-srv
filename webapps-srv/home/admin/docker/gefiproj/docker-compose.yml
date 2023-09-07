@@ -20,7 +20,7 @@ services:
       dockerfile: Dockerfile
       args:
         - TZ=${TZ:-Europe/Paris}
-    image: postgres:15.3-bookworm
+    image: cbna/gefiproj-db:postgres-15.3-bookworm
     # See: https://hub.docker.com/_/postgres
     container_name: gefiproj-postgres
     hostname: "${HOSTNAME}_gefiproj-postgres"
@@ -68,40 +68,14 @@ services:
       - ${POSTGRES_RESTORE_DIR-./postgres/restore}:/restore/
       - socket-postgres-storage:/var/run/postgresql
 
-  gefiproj-pgadmin:
-    image: dpage/pgadmin4:7.5
-    # See: https://hub.docker.com/r/dpage/pgadmin4/
-    container_name: gefiproj-pgadmin
-    hostname: "${HOSTNAME}_gefiproj-pgadmin"
-    restart: unless-stopped
-    depends_on: *default-depends_on
-    environment:
-      PGADMIN_DEFAULT_EMAIL: "${PGADMIN_DEFAULT_EMAIL}"
-      PGADMIN_DEFAULT_PASSWORD: "${PGADMIN_DEFAULT_PASSWORD}"
-      VIRTUAL_HOST: "${PGADMIN_DOMAIN}"
-      LETSENCRYPT_HOST: "${PGADMIN_DOMAIN}"
-    expose:
-      - 80
-    healthcheck:
-      # WARNING: use CMD-SHELL for /bin/sh as default in container
-      test: ["CMD-SHELL", "wget --quiet --output-document - http://localhost:80/misc/ping"]
-      interval: 10s
-      timeout: 10s
-      start_period: 30s
-      retries: 3
-    logging: *default-logging
-    volumes:
-      - ./postgres/backups/:/bkp
-      - data-admindb-storage:/var/lib/pgadmin
-
   gefiproj-webhook:
     # See: https://awesomeprogrammer.com/blog/2021/04/18/deploy-docker-container-with-http-webhook-the-easy-way/
-    image: almir/webhook:2.8.1
     build:
       context: ./webhook/build/
       dockerfile: Dockerfile
       args:
         - TZ=${TZ:-Europe/Paris}
+    image: cbna/gefiproj-webhook:webhook-2.8.1
     container_name: gefiproj-webhook
     hostname: "${HOSTNAME}_gefiproj-webhook"
     restart: unless-stopped
@@ -168,7 +142,6 @@ services:
 volumes:
   data-postgres-storage:
   socket-postgres-storage:
-  data-admindb-storage:
   config-api-storage:
   logs-api-storage:
 
