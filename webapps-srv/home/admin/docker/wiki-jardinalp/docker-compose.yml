@@ -56,7 +56,7 @@ services:
         YW_VERSION_NAME: "${YW_VERSION_NAME}"
         YW_VERSION_CODE: "${YW_VERSION_CODE}"
         YW_VERSION_CHECKSUM: "${YW_VERSION_CHECKSUM}"
-    image: yeswiki:cercopitheque
+    image: cbna/wiki-jardinalp:yeswiki-cercopitheque-${YW_VERSION_CODE}
     container_name: wiki-jardinalp-php
     hostname: "${HOSTNAME}_wiki-jardinalp-php"
     restart: unless-stopped
