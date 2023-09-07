@@ -1,0 +1,137 @@
+version: "3.9"
+
+x-logging:
+  &default-logging
+  driver: "json-file"
+  options:
+    max-size: 4m
+    max-file: 10
+
+x-depends_on:
+  &default-depends_on
+  saisie-flore-postgres:
+    condition: service_healthy
+
+services:
+
+  saisie-flore-nginx:
+    image: nginx:1.24.0-bullseye
+    container_name: saisie-flore-nginx
+    hostname: "${HOSTNAME}_saisie-flore-nginx"
+    restart: unless-stopped
+    depends_on:
+      << : *default-depends_on
+      saisie-flore-php:
+        condition: service_healthy
+    expose:
+      - 80
+    environment:
+      TZ: ${TZ:-Europe/Paris}
+      VIRTUAL_HOST: "${DOMAINS}"
+      LETSENCRYPT_HOST: "${DOMAINS}"
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail http://localhost:9090/nginx_status || exit 1"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+    logging: *default-logging
+    volumes:
+      - ./nginx/conf.d/saisie-flore.conf:/etc/nginx/templates/default.conf.template
+      - ./nginx/conf.d/status.conf:/etc/nginx/conf.d/status.conf:ro
+      - app-saisie-flore-storage:/var/www/html
+
+  saisie-flore-php:
+    build:
+      context: ./php/build/
+      dockerfile: Dockerfile
+      args:
+        TZ: ${TZ:-Europe/Paris}
+        POSTGRES_HOST: "${POSTGRES_HOST}"
+        POSTGRES_PORT: "${POSTGRES_PORT}"
+        POSTGRES_DB: "${POSTGRES_DB}"
+        POSTGRES_USER: "${POSTGRES_USER}"
+        POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+        APP_MAILTO: "${APP_MAILTO}"
+        APP_NAME: "${APP_NAME}"
+        APP_REPO: "${APP_REPO}"
+        APP_VERSION: "${APP_VERSION}"
+        APP_VERSION_CHECKSUM: "${APP_VERSION_CHECKSUM}"
+        MSMTP_OVH_HOST: "${MSMTP_OVH_HOST}"
+        MSMTP_OVH_EMAIL: "${MSMTP_OVH_EMAIL}"
+        MSMTP_OVH_PWD: "${MSMTP_OVH_PWD}"
+    image: cbna/saisie-flore-app:php-7.3.33-fpm-bullseye
+    container_name: saisie-flore-php
+    hostname: "${HOSTNAME}_saisie-flore-php"
+    restart: unless-stopped
+    depends_on: *default-depends_on
+    expose:
+      - 9000
+    logging: *default-logging
+    volumes:
+      - app-saisie-flore-storage:/var/www/html
+
+  saisie-flore-postgres:
+    build:
+      context: ./postgres/build/
+      dockerfile: Dockerfile
+      args:
+        - TZ=${TZ:-Europe/Paris}
+    image: cbna/saisie-flore-db:postgres-15.3-bookworm
+    # See: https://hub.docker.com/_/postgres
+    container_name: saisie-flore-postgres
+    hostname: "${HOSTNAME}_saisie-flore-postgres"
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-Europe/Paris}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_HOST_IP-127.0.0.1}:${POSTGRES_HOST_PORT-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready --quiet --username=${POSTGRES_USER} --dbname=${POSTGRES_DB} || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging: *default-logging
+    volumes:
+      - ./postgres/initdb:/docker-entrypoint-initdb.d/
+      - ./postgres/postgresql.conf:/etc/postgresql/postgresql.conf
+      - data-saisie-flore-postgres-storage:/var/lib/postgresql/data
+      - socket-saisie-flore-postgres-storage:/var/run/postgresql
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+
+  saisie-flore-postgres-cli:
+    # Usage:
+    #  - create a dump: `docker compose run --rm saisie-flore-postgres-cli /backups/backup.sh`
+    #  - restore a dump: `docker compose run --rm saisie-flore-postgres-cli /restore/restore.sh -d "2023-09-01_saisie-flore_PGcbna.sql"`
+    image: postgres:15.3-bookworm
+    container_name: saisie-flore-postgres-cli
+    restart: "no"
+    profiles: ["restore"]
+    depends_on:
+      saisie-flore-postgres:
+        condition: service_healthy
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST: saisie-flore-postgres
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_RESTORE_FILE: ${POSTGRES_RESTORE_FILE}
+    volumes:
+      - ./postgres/backups:/backups/
+      - ./postgres/restore:/restore/
+      - socket-saisie-flore-postgres-storage:/var/run/postgresql
+
+
+volumes:
+  app-saisie-flore-storage:
+  socket-saisie-flore-postgres-storage:
+  data-saisie-flore-postgres-storage:
+
+
+networks:
+  default:
+    name: nginx-proxy
+    external: true
