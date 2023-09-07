@@ -30,7 +30,7 @@ services:
         # To load backups, uncomment line in dockerfile and set a date instead of "None"
         BACKUP_DATE: "${BACKUP_DATE}"
         MSMTP_OVH_PWD: "${MSMTP_OVH_PWD}"
-    image: dokuwiki:8.1.22-fpm-bookworm
+    image: cbna/wiki-sinp:dokuwiki-8.1.22-fpm-bookworm
     # https://hub.docker.com/_/php
     container_name: wiki-sinp-dokuwiki
     env_file: .env
