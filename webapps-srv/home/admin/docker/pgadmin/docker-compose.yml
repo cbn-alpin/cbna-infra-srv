@@ -1,0 +1,43 @@
+version: "3.9"
+
+x-logging:
+  &default-logging
+  driver: "json-file"
+  options:
+    max-size: 4m
+    max-file: 10
+
+services:
+  pgadmin-app:
+    image: dpage/pgadmin4:7.6
+    # See: https://hub.docker.com/r/dpage/pgadmin4/
+    container_name: pgadmin-app
+    hostname: "${HOSTNAME}_pgadmin-app"
+    restart: unless-stopped
+    environment:
+      TZ: "${TZ}"
+      PGADMIN_DEFAULT_EMAIL: "${PGADMIN_DEFAULT_EMAIL}"
+      PGADMIN_DEFAULT_PASSWORD: "${PGADMIN_DEFAULT_PASSWORD}"
+      VIRTUAL_HOST: "${PGADMIN_DOMAIN}"
+      LETSENCRYPT_HOST: "${PGADMIN_DOMAIN}"
+    expose:
+      - 80
+    healthcheck:
+      # WARNING: use CMD-SHELL for /bin/sh as default in container
+      test: ["CMD-SHELL", "wget --quiet --output-document - http://localhost:80/misc/ping"]
+      interval: 10s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+    logging: *default-logging
+    volumes:
+      - ./backups:/bkp
+      - data-pgadmin-storage:/var/lib/pgadmin
+
+volumes:
+  data-pgadmin-storage:
+
+networks:
+  default:
+    name: nginx-proxy
+    external: true
