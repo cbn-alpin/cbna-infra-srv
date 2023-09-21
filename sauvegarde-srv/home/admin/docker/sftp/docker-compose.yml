@@ -7,8 +7,12 @@ services:
     ports:
       - "${HOST_SSH_PORT}:22"
     restart: unless-stopped
-    cap_add:
-      - SYS_ADMIN
+    # Bind mount require privilege. `--cap_add=SYS_ADMIN` doesn't work.
+    # See: https://github.com/atmoz/sftp/issues/60#issuecomment-332909232
+    # cap_add:
+    #   - SYS_ADMIN
+    # We use more privileges to do this:
+    privileged: True
     volumes:
       - ./ssh_host_ed25519_key:/etc/ssh/ssh_host_ed25519_key:ro
       - ./ssh_host_rsa_key:/etc/ssh/ssh_host_rsa_key:ro

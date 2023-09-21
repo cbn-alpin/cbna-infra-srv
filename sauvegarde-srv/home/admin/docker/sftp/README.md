@@ -18,9 +18,10 @@ de celui de l'hôte.
 ## Fichier users.conf
 
 Créer un fichier *users.conf* à partir du fichier *users.sample.conf* : `cp users.sample.conf users.conf`
-Par défaut, nous avons 2 utilisateurs seulement dans le fichier *users.conf* :
-  - *data* connecté à l'utilisateur de l'hôte *provider* via ses UID et GID. Il peut lire et écrire.
-  - *data-reader* qui a accès au même dossier que l'utilisateur *data* mais en lecture seulement.
+Par défaut, nous avons les utilisateurs suivant dans le fichier *users.conf* :
+  - *data* connecté à l'utilisateur de l'hôte *provider* via ses UID et GID. Il peut lire et écrire dans le dossier de l'hôte `/data/sftp-data/data/` correspondant au dossier` /home/data/` dans le container.
+  - *data-reader* qui a accès au même dossier que l'utilisateur *data* mais en lecture seulement car il utilise un UID différent de celui de *provider*. Il peut lire seulement le dossier de l'hôte `/data/sftp-data/data/` correspondant au dossier` /home/data-reader/` dans le container.
+  - *partner* connecté à l'utilisateur de l'hôte *provider* via ses UID et GID mais qui peut accéder seulement à son propre dossier sur l'hôte. Il peut lire et écrire dans le dossier de l'hôte `/data/sftp-data/partner/` correspondant au dossier` /home/partner/` dans le container.
 
 Pour encrypter les mots de passe, utiliser la commande :
 	```bash
@@ -34,7 +35,7 @@ Pour obtenir les UID et GID de l'utilisateur de l'hôte *provider* utilisé la c
 L'utilisateur *data* ne peut pas écrire à la racine de son dépôt.
 Il faut donc créer en amont les dossiers racines :
 - Sur l'hôte, passer en root : `sudo -i`
-- Aller dans le dossier de l'utilisateur sur l'hôte : `cd /home/provider/data/`
+- Aller dans le dossier de l'utilisateur sur l'hôte : `cd /data/sftp-data/data/`
 - Créer les dossiers qui hébergeront les données à intégrer : `mkdir test`
 - Donner les droits à l'utilisateur correspondant sur l'hôte (*provider* dans notre cas) d'y accéder en lecture et écriture : `chown provider:users ./*`
 
