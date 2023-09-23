@@ -20,6 +20,8 @@ services:
     labels:
       com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy: "true"
     environment:
+      # Define here old domains to redirect to new domain.
+      # Then add a new Nginx redirect line in : ./docker-gen/vhost.d/server/example.com
       VIRTUAL_HOST: web.gefiproj.cbn-alpin.fr
       LETSENCRYPT_HOST: web.gefiproj.cbn-alpin.fr
     logging: *default-logging
@@ -33,7 +35,7 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/sites-enabled/:/etc/nginx/sites-enabled/:ro
 
-  docker-gen:
+  nginx-proxy-gen:
     image: nginxproxy/docker-gen:0.10.4-debian
     # https://hub.docker.com/r/nginxproxy/docker-gen
     container_name: nginx-proxy-gen
@@ -61,14 +63,14 @@ services:
     container_name: nginx-proxy-letsencrypt
     hostname: "${HOSTNAME}_nginx-proxy-letsencrypt"
     depends_on:
-      - docker-gen
+      - nginx-proxy-gen
     restart: unless-stopped
     environment:
       DEFAULT_EMAIL: adminsys@cbn-alpin.fr
       NGINX_DOCKER_GEN_CONTAINER: nginx-proxy-gen
       NGINX_PROXY_CONTAINER: nginx-proxy-gen
       # For debug uncomment and set DEBUG value to 1
-      #DEBUG: 1
+      DEBUG: 1
     logging: *default-logging
     volumes:
       - certs-storage:/etc/nginx/certs
