@@ -30,6 +30,10 @@ Pour encrypter les mots de passe, utiliser la commande :
 
 Pour obtenir les UID et GID de l'utilisateur de l'hôte *provider* utilisé la commande : `id provider`
 
+## Fichier bindmount.sh
+
+Le script `bindmount.sh`, lancé dans le container, doit indiquer tous les montages des dossiers présents dans `/data`  vers les dossiers `/home` correspondant.
+
 ## Problème d'écriture à la racine d'un dépôt SFTP
 
 L'utilisateur *data* ne peut pas écrire à la racine de son dépôt.
@@ -54,3 +58,6 @@ Tenter de vous connecter et d'uploader un fichier dans un des dossiers préalabl
 
 Normalement, il est impossible d'uploader des fichiers ou de créer de nouveaux dossiers à la racine.
 
+## TODO
+- Voir s'il est possible et plus simple de monter les dossiers des utilisateurs via le fichier
+docker-compose.yml plutôt que via bindmount.sh.
