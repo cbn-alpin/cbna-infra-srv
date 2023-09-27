@@ -1,0 +1,156 @@
+version: "3.9"
+
+x-logging:
+  &default-logging
+  driver: "json-file"
+  options:
+    max-size: 4m
+    max-file: 10
+
+x-depends_on:
+  &default-depends_on
+  cms-cbna-joomla-mariadb:
+    condition: service_healthy
+
+services:
+
+  cms-cbna-joomla-nginx:
+    image: nginx:1.24.0-bullseye
+    # https://hub.docker.com/_/nginx
+    container_name: cms-cbna-joomla-nginx
+    hostname: "${HOSTNAME}_cms-cbna-joomla-nginx"
+    restart: unless-stopped
+    depends_on:
+      << : *default-depends_on
+      cms-cbna-joomla:
+        condition: service_started
+    expose:
+      - 80
+      - 90
+    environment:
+      TZ: ${TZ:-Europe/Paris}
+      NGINX_HOST: ${DOMAIN}
+      NGINX_PORT: 80
+      VIRTUAL_HOST: "${DOMAIN_ALL}"
+      LETSENCRYPT_HOST: "${DOMAIN_ALL}"
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail http://localhost:9090/nginx_status || exit 1"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+    logging: *default-logging
+    volumes:
+      - ./nginx/.htpasswd:/etc/nginx/.htpasswd
+      - ./nginx/conf.d/cbn-alpin.conf:/etc/nginx/templates/default.conf.template
+      - ./nginx/conf.d/status.conf:/etc/nginx/conf.d/status.conf:ro
+      - app-joomla-cbna-cms-storage:/var/www/html
+
+  cms-cbna-joomla:
+    build:
+      context: ./joomla/build
+      dockerfile: Dockerfile
+      args:
+        TZ: ${TZ:-Europe/Paris}
+        JOOMLA_BACKUP_DATE: ${JOOMLA_BACKUP_DATE-"None"}
+    image: cbna/cms-test-joomla:joomla-3.10.11-php7.4-fpm
+    # https://hub.docker.com/_/joomla
+    container_name: cms-cbna-joomla
+    hostname: "${HOSTNAME}_cms-cbna-joomla"
+    restart: unless-stopped
+    depends_on: *default-depends_on
+    expose:
+      - 9000
+    environment:
+      TZ: '${TZ}'
+      JOOMLA_DB_HOST: 'cms-cbna-joomla-mariadb'
+      JOOMLA_DB_NAME: '${JOOMLA_DB_NAME}'
+      JOOMLA_DB_USER: '${JOOMLA_DB_USER}'
+      JOOMLA_DB_PASSWORD: '${JOOMLA_DB_PASSWORD}'
+    volumes:
+      - app-joomla-cbna-cms-storage:/var/www/html
+      - ./joomla/conf.d/security.ini:${PHP_INI_DIR_PREFIX}/php/conf.d/security.ini
+      - ./joomla/php-fpm.d/z-www.conf:${PHP_INI_DIR_PREFIX}/php-fpm.d/z-www.conf
+    entrypoint: bash -c "grep -qe 'date.timezone = ${TZ}' ${PHP_INI_DIR_PREFIX}/php/conf.d/security.ini || echo 'date.timezone = ${TZ}' >> ${PHP_INI_DIR_PREFIX}/php/conf.d/security.ini; /entrypoint.sh 'php-fpm'"
+
+  cms-cbna-joomla-email:
+    image: 'mailhog/mailhog'
+    container_name: cms-cbna-joomla-email
+    hostname: "${HOSTNAME}_cms-cbna-joomla-email"
+    restart: unless-stopped
+    ports:
+      - '1025:1025'
+      - '8025:8025'
+    environment:
+      MH_HOSTNAME: ${MH_HOSTNAME}
+      MH_AUTH_FILE: ${MH_AUTH_FILE}
+    entrypoint: sh -c "echo ${HTPASSWD_USERNAME}:$(MailHog bcrypt ${HTPASSWD_PASSWORD}) > ${MH_AUTH_FILE} && MailHog"
+
+  cms-cbna-joomla-mariadb:
+    image: mariadb:11.1.2-jammy
+    # https://hub.docker.com/_/mariadb
+    container_name: cms-cbna-joomla-mariadb
+    hostname: "${HOSTNAME}_cms-cbna-joomla-mariadb"
+    restart: unless-stopped
+    expose:
+      - 3306
+    environment:
+      TZ: ${TZ:-Europe/Paris}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${MARIADB_DB}
+      MARIADB_USER: ${MARIADB_USER}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+      MARIADB_ALLOW_EMPTY_PASSWORD: 'No'
+      # See : https://github.com/docker-library/mariadb/issues/160
+      MARIADB_INITDB_SKIP_TZINFO: "yes"
+    healthcheck:
+      test: ["CMD-SHELL", "healthcheck.sh --connect --innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    logging: *default-logging
+    volumes:
+      - db-joomla-cbna-cms-storage:/var/lib/mysql
+      - ./mariadb/initdb.d/:/docker-entrypoint-initdb.d/
+
+  cms-cbna-joomla-adminer:
+    image: adminer:4.8.1-standalone
+    # https://hub.docker.com/_/adminer
+    container_name: cms-cbna-joomla-adminer
+    hostname: "${HOSTNAME}_cms-cbna-joomla-adminer"
+    restart: unless-stopped
+    expose:
+      - 8080
+    depends_on: *default-depends_on
+    environment:
+      TZ: ${TZ:-Europe/Paris}
+      VIRTUAL_HOST: "${ADMINER_DOMAIN}"
+      LETSENCRYPT_HOST: "${ADMINER_DOMAIN}"
+      ADMINER_DESIGN: lucas-sandery
+      ADMINER_DEFAULT_SERVER: cms-cbna-joomla-mariadb
+
+  cms-cbna-joomla-redis:
+    image: 'redis:latest'
+    container_name: cms-cbna-joomla-redis
+    hostname: redis
+    sysctls:
+      - net.core.somaxconn=512
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    environment:
+      ALLOW_EMPTY_PASSWORD: 'yes'
+      TZ: '${TZ}'
+    volumes:
+      - data-redis-joomla-cbna-cms-storage:/data
+      - ./redis/redis.conf:${REDIS_CONF_PREFIX}/redis/redis.conf
+    command: "redis-server ${REDIS_CONF_PREFIX}/redis/redis.conf"
+
+volumes:
+  db-joomla-cbna-cms-storage:
+  app-joomla-cbna-cms-storage:
+  data-redis-joomla-cbna-cms-storage:
+
+networks:
+  default:
+    name: nginx-proxy
+    external: true
