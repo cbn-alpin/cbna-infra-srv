@@ -1,0 +1,23 @@
+# Run in local for themes development
+#
+# WARNING before using :
+#  1. Create a symbolic link ./wordpress/theme to local theme workspace directory
+#  2. Check your UID and GID with `id` command. If not 1000 update WP_DEV_FPM_USER in .env file if needed
+# How to use : `docker compose -f docker-compose.yml -f docker-compose.dev.yml up`
+
+version: "3.9"
+
+services:
+  cms-cbna-nginx:
+    hostname: cms-cbna-nginx
+    volumes:
+      - "${WP_DEV_THEME_PATH:-./wordpress/theme}:/var/www/html/wp-content/themes/${WP_DEV_THEME_NAME:-default}:ro"
+    command: [nginx-debug, '-g', 'daemon off;']
+
+  cms-cbna-wordpress:
+    hostname: cms-cbna-wordpress
+    user: ${WP_DEV_FPM_USER:-1000:1000}
+    environment:
+      WORDPRESS_DEBUG: "true"
+    volumes:
+      - "${WP_DEV_THEME_PATH:-./wordpress/theme}:/var/www/html/wp-content/themes/${WP_DEV_THEME_NAME:-default}:ro"
