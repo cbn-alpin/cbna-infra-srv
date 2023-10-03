@@ -1,0 +1,45 @@
+version: "3.9"
+
+services:
+
+  glpi-mariadb:
+    image: mariadb:10.7
+    container_name: glpi-mariadb
+    hostname: "${HOSTNAME}_glpi-mariadb"
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-Europe/Paris}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${MARIADB_DB}
+      MARIADB_USER: ${MARIADB_USER}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+      MARIADB_ALLOW_EMPTY_PASSWORD: "No"
+      # See : https://github.com/docker-library/mariadb/issues/160
+      MARIADB_INITDB_SKIP_TZINFO: "yes"
+    env_file:
+      - ./mariadb.env
+    volumes:
+      - db-glpi-storage:/var/lib/mysql
+
+  glpi:
+    image: diouxx/glpi
+    container_name : glpi
+    hostname: "${HOSTNAME}_glpi"
+    ports:
+      - "80:80"
+    restart: unless-stopped
+    environment:
+      - TIMEZONE=${TZ:-Europe/Paris}
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - data-glpi-storage:/var/www/html/glpi
+
+volumes:
+  data-glpi-storage:
+  db-glpi-storage:
+
+networks:
+  default:
+    name: nginx-proxy
+    external: true
