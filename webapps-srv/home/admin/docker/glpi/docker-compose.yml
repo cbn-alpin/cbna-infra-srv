@@ -1,42 +1,149 @@
 version: "3.9"
 
+x-logging:
+  &default-logging
+  driver: "json-file"
+  options:
+    max-size: 4m
+    max-file: 10
+
+x-depends_on:
+  &default-depends_on
+  glpi-mariadb:
+    condition: service_healthy
+
 services:
 
+  glpi-nginx:
+    image: nginx:1.24.0-bullseye
+    # https://hub.docker.com/_/nginx
+    container_name: glpi-nginx
+    hostname: "${HOSTNAME}_glpi-nginx"
+    restart: unless-stopped
+    depends_on: *default-depends_on
+    # depends_on:
+    #   << : *default-depends_on
+    #   glpi:
+    #     condition: service_healthy
+    expose:
+      - 80
+    environment:
+      TZ: ${TZ:-Europe/Paris}
+      VIRTUAL_HOST: "${DOMAIN_ALL}"
+      LETSENCRYPT_HOST: "${DOMAIN_ALL}"
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail http://localhost:9090/nginx_status || exit 1"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+    logging: *default-logging
+    volumes:
+      - ./nginx/conf.d/app.conf:/etc/nginx/templates/default.conf.template
+      - ./nginx/conf.d/status.conf:/etc/nginx/conf.d/status.conf:ro
+      - config-glpi-storage:/app/config
+      - data-glpi-storage:/app/data
+      - glpi-storage:/app/glpi
+
+  glpi:
+    build:
+      context: ./glpi/build/
+      dockerfile: Dockerfile
+      args:
+        TZ: ${TZ:-Europe/Paris}
+        APP_NAME: ${GLPI_NAME}
+        APP_VERSION: ${GLPI_VERSION}
+        APP_DOWNLOAD_URL: ${GLPI_DOWNLOAD_URL}
+        APP_MD5_CHECKSUM: ${GLPI_MD5_CHECKSUM}
+        APP_PATH: ${GLPI_PATH}
+        PLUGIN_FI_VERSION: ${GLPI_FI_VERSION}
+        PLUGIN_FI_DOWNLOAD_URL: ${GLPI_FI_DOWNLOAD_URL}
+        DB_HOST: "glpi-mariadb"
+        DB_NAME: ${MARIADB_DATABASE}
+        DB_USER: ${MARIADB_USER}
+        DB_PASSWORD: ${MARIADB_PASSWORD}
+    image: cbna/glpi:${GLPI_VERSION}
+    container_name : glpi
+    hostname: "${HOSTNAME}_glpi"
+    expose:
+      - 9000
+    restart: unless-stopped
+    depends_on: *default-depends_on
+    environment:
+      TIMEZONE: "${TZ:-Europe/Paris}"
+      MYSQL_HOST: "glpi-mariadb"
+      MYSQL_DATABASE: ${MARIADB_DATABASE}
+      MYSQL_USER: ${MARIADB_USER}
+      MYSQL_PASSWORD: ${MARIADB_PASSWORD}
+      HOST_USER_NAME: ${HOST_USER_NAME}
+      HOST_USER_ID: ${HOST_USER_ID}
+      HOST_GROUP_ID: ${HOST_GROUP_ID}
+    healthcheck:
+      test: ["CMD-SHELL", "php-fpm-healthcheck"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    logging: *default-logging
+    volumes:
+      - ./backups/:/backups/
+      - ./glpi/virtualhost.conf:/etc/apache2/sites-available/000-default.conf:ro
+      - config-glpi-storage:/app/config
+      - data-glpi-storage:/app/data
+      - glpi-storage:/app/glpi
+
   glpi-mariadb:
-    image: mariadb:10.7
+    image: mariadb:11.1.2-jammy
+    # https://hub.docker.com/_/mariadb
     container_name: glpi-mariadb
     hostname: "${HOSTNAME}_glpi-mariadb"
     restart: unless-stopped
+    expose:
+      - 3306
     environment:
       TZ: ${TZ:-Europe/Paris}
+      APP_NAME: ${GLPI_NAME}
+      APP_PATH: ${GLPI_PATH}
+      HOST_USER_NAME: ${HOST_USER_NAME}
+      HOST_USER_ID: ${HOST_USER_ID}
+      HOST_GROUP_ID: ${HOST_GROUP_ID}
       MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
-      MARIADB_DATABASE: ${MARIADB_DB}
+      MARIADB_DATABASE: ${MARIADB_DATABASE}
       MARIADB_USER: ${MARIADB_USER}
       MARIADB_PASSWORD: ${MARIADB_PASSWORD}
       MARIADB_ALLOW_EMPTY_PASSWORD: "No"
       # See : https://github.com/docker-library/mariadb/issues/160
-      MARIADB_INITDB_SKIP_TZINFO: "yes"
-    env_file:
-      - ./mariadb.env
+      #MARIADB_INITDB_SKIP_TZINFO: "yes"
+    healthcheck:
+      test: ["CMD-SHELL", "healthcheck.sh --connect --innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    logging: *default-logging
     volumes:
+      - ./backups/:/backups/
+      - ./mariadb/custom.conf:/etc/mysql/conf.d/custom.conf:ro
+      - ./mariadb/initdb.d/:/docker-entrypoint-initdb.d/
       - db-glpi-storage:/var/lib/mysql
 
-  glpi:
-    image: diouxx/glpi
-    container_name : glpi
-    hostname: "${HOSTNAME}_glpi"
-    ports:
-      - "80:80"
+  glpi-adminer:
+    image: adminer:4.8.1-standalone
+    # https://hub.docker.com/_/adminer
+    container_name: glpi-adminer
+    hostname: "${HOSTNAME}_glpi-adminer"
     restart: unless-stopped
+    expose:
+      - 8080
+    depends_on: *default-depends_on
     environment:
-      - TIMEZONE=${TZ:-Europe/Paris}
-    volumes:
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
-      - data-glpi-storage:/var/www/html/glpi
+      TZ: ${TZ:-Europe/Paris}
+      VIRTUAL_HOST: "${ADMINER_DOMAIN}"
+      LETSENCRYPT_HOST: "${ADMINER_DOMAIN}"
+      ADMINER_DESIGN: lucas-sandery
+      ADMINER_DEFAULT_SERVER: glpi-mariadb
 
 volumes:
   data-glpi-storage:
+  config-glpi-storage:
+  glpi-storage:
   db-glpi-storage:
 
 networks:
