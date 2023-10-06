@@ -79,10 +79,10 @@ services:
   cms-cbna-wp-cli:
     # Usage:
     # - change site URL in database:
-    #   `docker compose run --rm cms-cbna-wp-cli wp search-replace wp.cbn-alpin.fr test-wp.cbn-alpin.fr --all-tables`
+    #   `docker compose run --rm cms-cbna-wp-cli wp search-replace test-wp.cbn-alpin.fr cbn-alpin.fr --all-tables`
     # - change site Scheme (http => https) :
-    #   `docker compose run --rm cms-cbna-wp-cli wp option update home 'https://test-wp.cbn-alpin.fr'`
-    #   `docker compose run --rm cms-cbna-wp-cli wp option update siteurl 'https://test-wp.cbn-alpin.fr'`
+    #   `docker compose run --rm cms-cbna-wp-cli wp option update home 'https://cbn-alpin.fr'`
+    #   `docker compose run --rm cms-cbna-wp-cli wp option update siteurl 'https://cbn-alpin.fr'`
     image : wordpress:cli-2.8.1-php8.2
     # https://hub.docker.com/_/wordpress
     container_name: cms-cbna-wp-cli
@@ -102,6 +102,7 @@ services:
         condition: service_healthy
     volumes:
       - wordpress-cbna-cms-storage:/var/www/html
+      - ./backups:/backups
 
   cms-cbna-mariadb:
     image: mariadb:11.1.2-jammy
