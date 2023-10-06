@@ -103,6 +103,7 @@ services:
         condition: service_healthy
     volumes:
       - wordpress-cbna-cms-storage:/var/www/html
+      - ./backups:/backups
 
   cms-cbna-test-mariadb:
     image: mariadb:11.1.2-jammy
