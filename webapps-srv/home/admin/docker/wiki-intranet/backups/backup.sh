@@ -16,4 +16,4 @@ tar jcvf /backups/$(date +"%Y-%m-%d")_wiki-intranet_media.tar.bz2 \
 tar jcvf /backups/$(date +"%Y-%m-%d")_wiki-intranet_plugins_templates.tar.bz2 \
 	/var/www/html/lib
 
-find  /backups/ -type f -mtime +3 -name '*.tar.bz2' -execdir rm -- '{}' \;
+find  /backups/ -type f -mtime +1 -name '*.tar.bz2' -execdir rm -- '{}' \;
