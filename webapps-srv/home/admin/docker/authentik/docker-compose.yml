@@ -1,0 +1,107 @@
+version: "3.9"
+
+x-logging:
+  &default-logging
+  driver: "json-file"
+  options:
+    max-size: 4m
+    max-file: 10
+
+services:
+  postgresql:
+    image: docker.io/library/postgres:12-alpine
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_PASSWORD: ${PG_PASS:?database password required}
+      POSTGRES_USER: ${PG_USER:-authentik}
+      POSTGRES_DB: ${PG_DB:-authentik}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      start_period: 20s
+      interval: 30s
+      retries: 5
+      timeout: 5s
+    logging: *default-logging
+    volumes:
+      - db-authentik-storage:/var/lib/postgresql/data
+
+  redis:
+    image: docker.io/library/redis:alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      start_period: 20s
+      interval: 30s
+      retries: 5
+      timeout: 3s
+    logging: *default-logging
+    volumes:
+      - redis-authentik-storage:/data
+    command: --save 60 1 --loglevel warning
+
+  server:
+    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2023.8.3}
+    restart: unless-stopped
+    depends_on:
+      - postgresql
+      - redis
+    expose:
+      - 9000
+    env_file:
+      - .env
+    environment:
+      VIRTUAL_HOST: "${SITE_DOMAIN_ALL}"
+      LETSENCRYPT_HOST: "${SITE_DOMAIN_ALL}"
+      AUTHENTIK_REDIS__HOST: redis
+      AUTHENTIK_POSTGRESQL__HOST: postgresql
+      AUTHENTIK_POSTGRESQL__USER: ${PG_USER:-authentik}
+      AUTHENTIK_POSTGRESQL__NAME: ${PG_DB:-authentik}
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${PG_PASS}
+    labels:
+      com.github.nginx-proxy.nginx-proxy.keepalive: 10 
+    logging: *default-logging
+    volumes:
+      - ./authentik/media:/media
+      - ./authentik/custom-templates:/templates
+      - ./authentik/dbip-city-lite-2023-10.mmdb:/geoip/GeoLite2-City.mmdb
+    command: server
+
+  worker:
+    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2023.8.3}
+    restart: unless-stopped
+    depends_on:
+      - postgresql
+      - redis
+    env_file:
+      - .env
+    environment:
+      AUTHENTIK_REDIS__HOST: redis
+      AUTHENTIK_POSTGRESQL__HOST: postgresql
+      AUTHENTIK_POSTGRESQL__USER: ${PG_USER:-authentik}
+      AUTHENTIK_POSTGRESQL__NAME: ${PG_DB:-authentik}
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${PG_PASS}
+    # `user: root` and the docker socket volume are optional.
+    # See more for the docker socket integration here:
+    # https://goauthentik.io/docs/outposts/integrations/docker
+    # Removing `user: root` also prevents the worker from fixing the permissions
+    # on the mounted folders, so when removing this make sure the folders have the correct UID/GID
+    # (1000:1000 by default)
+    user: root
+    logging: *default-logging
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./authentik/media:/media
+      - ./authentik/certs:/certs
+      - ./authentik/custom-templates:/templates
+    command: worker
+
+volumes:
+  db-authentik-storage:
+  redis-authentik-storage:
+
+networks:
+  default:
+    name: nginx-proxy
+    external: true
