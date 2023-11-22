@@ -2,13 +2,21 @@ version: "3.9"
 
 services:
   telegraf:
-    image: telegraf:1.26.3
+    build:
+      context: ./build/
+      dockerfile: Dockerfile
+      args:
+        TZ: ${TZ:-Europe/Paris}
+        TELEGRAF_PGCUSTOM_URL_ZIP: ${TELEGRAF_PGCUSTOM_URL_ZIP}
+        POSTGRESQL_HOST: ${POSTGRESQL_HOST}
+        POSTGRESQL_TELEGRAF_PWD: ${POSTGRESQL_TELEGRAF_PWD}
+    image: cbna/telegraf:1.28.5
     container_name: telegraf
+    hostname: "${HOSTNAME:-siflora}_telegraf"
     # https://hub.docker.com/_/telegraf
     restart: unless-stopped
     ports:
       - "127.0.0.1:8125:8125/udp"
-    hostname: ${HOSTNAME:-siflora}
     # To authorize telgraf to access to /run/docker.sock set host docker gid
     # Find docker gid with: stat -c '%g' /var/run/docker.sock
     user: "telegraf:${DOCKER_GID:-994}"
@@ -26,7 +34,7 @@ services:
       INFLUXDB2_INIT_ORG: ${INFLUXDB2_INIT_ORG}
       INFLUXDB2_INIT_BUCKET: ${INFLUXDB2_INIT_BUCKET}
       INFLUXDB2_TELEGRAF_TOKEN: ${INFLUXDB2_TELEGRAF_TOKEN}
-      POSTGRESQL_TELEGRAF_PWD: ${POSTGRESQL_TELEGRAF_PWD}
+      #POSTGRESQL_TELEGRAF_PWD: ${POSTGRESQL_TELEGRAF_PWD}
     volumes:
       - ./telegraf.conf:/etc/telegraf/telegraf.conf:ro
       - /:/host:ro
