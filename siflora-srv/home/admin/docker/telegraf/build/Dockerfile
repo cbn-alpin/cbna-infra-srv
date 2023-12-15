@@ -1,4 +1,4 @@
-FROM telegraf:1.28.5
+FROM telegraf:1.29.1
 
 # ⚠ WARNING: Telegraf base image must be in same Debian version than Host
 # See: https://github.com/influxdata/influxdata-docker/blob/master/telegraf/1.28/Dockerfile
