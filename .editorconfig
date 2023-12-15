@@ -24,6 +24,6 @@ trim_trailing_whitespace = false
 trim_trailing_whitespace = false
 max_line_length = 110
 
-[*.html]
+[*.html,*.css]
 indent_style = tab
 indent_size = 2
