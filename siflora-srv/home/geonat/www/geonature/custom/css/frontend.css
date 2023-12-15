@@ -1,0 +1,38 @@
+
+/* GÉNÉRAL */
+:root {
+	--primary: #006ea0;
+	--secondary: #c01f3b;
+}
+a {
+	color: #006ea0;
+}
+a:hover {
+	color: #c01f3b;
+}
+a.btn.btn-default:hover{
+	background-color: #2f4151;
+}
+
+/* LOGIN */
+#login-body {
+	background:
+		url(images/logo-cbna.png) bottom 10px right 10px no-repeat,
+		url(images/login_background_01.jpg) center 10% no-repeat
+		!important;
+	background-size: 100px 100px, cover !important;
+}
+#login-body::before {
+	font-weight: bold;
+	color: white;
+	background-color: rgba(0,0,0,.4);
+	padding: 5px;
+	border-radius: 5px;
+	white-space: pre;
+	content: "Salix breviserrata Flod. - 1940\a© Mathieu MICHOULIER - CBNA";/* Background 01*/
+	/*content: "Sesleria ovata (Hoppe) A.Kern. - 1881\a© Mathieu MICHOULIER - CBNA";*//* Background 02*/
+	position: absolute;
+	font-style: italic;
+	bottom: 5px;
+	left: 5px;
+}
