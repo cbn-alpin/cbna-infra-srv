@@ -17,11 +17,12 @@ services:
     ports:
       - "0.0.0.0:80:80"
       - "0.0.0.0:443:443"
+      - "[::]:80:80"
+      - "[::]:443:443"
     labels:
       com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy: "true"
     environment:
-      # Define here old domains to redirect to new domain.
-      # Then add a new Nginx redirect line in : ./docker-gen/vhost.d/server/example.com
+      # Define here domains to redirect
       VIRTUAL_HOST: web.gefiproj.cbn-alpin.fr
       LETSENCRYPT_HOST: web.gefiproj.cbn-alpin.fr
     logging: *default-logging
@@ -46,6 +47,8 @@ services:
     labels:
       com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen: "true"
     command: -notify-sighup nginx-proxy -watch -wait 5s:30s /etc/docker-gen/templates/nginx.tmpl /etc/nginx/conf.d/default.conf
+    environment:
+      ENABLE_IPV6: true
     logging: *default-logging
     volumes:
       - certs-storage:/etc/nginx/certs
