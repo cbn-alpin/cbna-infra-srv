@@ -42,17 +42,20 @@ services:
     command: --save 60 1 --loglevel warning
 
   server:
-    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2023.8.3}
+    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2024.4.2}
     restart: unless-stopped
     depends_on:
       - postgresql
       - redis
+    # WARNING: ports 9000 AND 9443 must be exposed for websocket to work properly
     expose:
       - 9000
+      - 9443
     env_file:
       - .env
     environment:
       VIRTUAL_HOST: "${SITE_DOMAIN_ALL}"
+      VIRTUAL_PORT: 9000
       LETSENCRYPT_HOST: "${SITE_DOMAIN_ALL}"
       AUTHENTIK_REDIS__HOST: redis
       AUTHENTIK_POSTGRESQL__HOST: postgresql
@@ -69,7 +72,7 @@ services:
     command: server
 
   worker:
-    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2023.8.3}
+    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2024.4.2}
     restart: unless-stopped
     depends_on:
       - postgresql
