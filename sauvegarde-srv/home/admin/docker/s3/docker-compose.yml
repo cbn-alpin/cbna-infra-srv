@@ -1,0 +1,50 @@
+version: "3.9"
+
+services:
+  s3-minio-api:
+    image: quay.io/minio/minio:RELEASE.2023-09-04T19-57-37Z
+    # See: https://hub.docker.com/r/minio/minio
+    container_name: s3-minio-api
+    expose:
+      - 9000
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_ADDRESS: '0.0.0.0:9000'
+      MINIO_CONSOLE_ADDRESS: '0.0.0.0:9001'
+      MINIO_SERVER_URL: "https://api-s3.cbn-alpin.fr"
+      VIRTUAL_HOST: api-s3.cbn-alpin.fr
+      LETSENCRYPT_HOST: api-s3.cbn-alpin.fr
+    volumes:
+      - /data/s3-data:/data
+    command: minio server /data
+
+  s3-minio-console:
+    image: quay.io/minio/minio:RELEASE.2023-09-04T19-57-37Z
+    # See: https://hub.docker.com/r/minio/minio
+    container_name: s3-minio-console
+    expose:
+      - 9001
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_ADDRESS: '0.0.0.0:9000'
+      MINIO_CONSOLE_ADDRESS: '0.0.0.0:9001'
+      MINIO_BROWSER_REDIRECT_URL: "https://console-s3.cbn-alpin.fr"
+      VIRTUAL_HOST: console-s3.cbn-alpin.fr
+      LETSENCRYPT_HOST: console-s3.cbn-alpin.fr,s3.cbn-alpin.fr
+    volumes:
+      - /data/s3-data:/data
+    command: minio server /data
+
+networks:
+  default:
+    name: nginx-proxy
+    external: true
+
+
