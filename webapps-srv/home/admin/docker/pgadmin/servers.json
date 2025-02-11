@@ -1,0 +1,84 @@
+{
+    "Servers": {
+        "1": {
+            "Name": "Gefiproj",
+            "Group": "Servers",
+            "Host": "localhost",
+            "Port": 55432,
+            "MaintenanceDB": "proddb",
+            "Username": "dbprod",
+            "UseSSHTunnel": 1,
+            "TunnelHost": "149.202.162.89",
+            "TunnelPort": "60800",
+            "TunnelUsername": "dbguest",
+            "TunnelAuthentication": 0,
+            "KerberosAuthentication": false,
+            "ConnectionParameters": {
+                "sslmode": "prefer",
+                "connect_timeout": 10,
+                "sslcert": "<STORAGE_DIR>/.postgresql/postgresql.crt",
+                "sslkey": "<STORAGE_DIR>/.postgresql/postgresql.key"
+            }
+        },
+        "2": {
+            "Name": "Saisie-flore",
+            "Group": "Servers",
+            "Host": "localhost",
+            "Port": 56432,
+            "MaintenanceDB": "postgres",
+            "Username": "pguser",
+            "UseSSHTunnel": 1,
+            "TunnelHost": "149.202.162.89",
+            "TunnelPort": "60800",
+            "TunnelUsername": "dbguest",
+            "TunnelAuthentication": 0,
+            "KerberosAuthentication": false,
+            "ConnectionParameters": {
+                "sslmode": "prefer",
+                "connect_timeout": 10,
+                "sslcert": "<STORAGE_DIR>/.postgresql/postgresql.crt",
+                "sslkey": "<STORAGE_DIR>/.postgresql/postgresql.key"
+            }
+        },
+        "3": {
+            "Name": "Authentik",
+            "Group": "Servers",
+            "Host": "localhost",
+            "Port": 57432,
+            "MaintenanceDB": "authentik",
+            "Username": "authentik",
+            "UseSSHTunnel": 1,
+            "TunnelHost": "149.202.162.89",
+            "TunnelPort": "60800",
+            "TunnelUsername": "dbguest",
+            "TunnelAuthentication": 0,
+            "KerberosAuthentication": false,
+            "ConnectionParameters": {
+                "sslmode": "prefer",
+                "connect_timeout": 10,
+                "sslcert": "<STORAGE_DIR>/.postgresql/postgresql.crt",
+                "sslkey": "<STORAGE_DIR>/.postgresql/postgresql.key"
+            }
+        },
+        "4": {
+            "Name": "Taiga",
+            "Group": "Servers",
+            "Host": "localhost",
+            "Port": 58432,
+            "MaintenanceDB": "taiga",
+            "Username": "taiga",
+            "UseSSHTunnel": 1,
+            "TunnelHost": "149.202.162.89",
+            "TunnelPort": "60800",
+            "TunnelUsername": "dbguest",
+            "TunnelAuthentication": 0,
+            "KerberosAuthentication": false,
+            "ConnectionParameters": {
+                "sslmode": "prefer",
+                "connect_timeout": 10,
+                "sslcert": "<STORAGE_DIR>/.postgresql/postgresql.crt",
+                "sslkey": "<STORAGE_DIR>/.postgresql/postgresql.key"
+            }
+        }
+    }
+}

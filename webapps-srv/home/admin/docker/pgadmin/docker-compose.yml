@@ -1,5 +1,3 @@
-version: "3.9"
-
 x-logging:
   &default-logging
   driver: "json-file"
@@ -9,7 +7,7 @@ x-logging:
 
 services:
   pgadmin-app:
-    image: dpage/pgadmin4:7.6
+    image: dpage/pgadmin4:8.11
     # See: https://hub.docker.com/r/dpage/pgadmin4/
     container_name: pgadmin-app
     hostname: "${HOSTNAME}_pgadmin-app"
@@ -32,6 +30,7 @@ services:
     logging: *default-logging
     volumes:
       - ./backups:/bkp
+      - ./servers.json:/pgadmin4/servers.json
       - data-pgadmin-storage:/var/lib/pgadmin
 
 volumes:
