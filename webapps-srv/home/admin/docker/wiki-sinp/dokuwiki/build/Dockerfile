@@ -6,6 +6,9 @@ LABEL author="Jean-Pascal MILCENT" \
 
 ARG BACKUP_DATE
 ARG MSMTP_OVH_PWD
+ARG GCP_CLIENT_ID
+ARG GCP_CLIENT_SECRET
+ARG GCP_REFRESH_TOKEN
 
 ENV DW_VERSION=2023-04-04a
 ENV DW_DOWNLOAD_URL=https://download.dokuwiki.org/src/dokuwiki/dokuwiki-${DW_VERSION}.tgz
@@ -22,7 +25,8 @@ RUN apt-get update && \
 		libfreetype6-dev \
         libjpeg62-turbo-dev \
         libpng-dev \
-		msmtp msmtp-mta bsd-mailx mailutils && \
+		msmtp msmtp-mta bsd-mailx mailutils \
+		python3 && \
     docker-php-ext-install -j$(nproc) iconv && \
     docker-php-ext-configure gd --with-freetype=/usr/include/ --with-jpeg=/usr/include/ && \
     docker-php-ext-install -j$(nproc) gd && \
@@ -42,6 +46,13 @@ RUN sed -i "s/\$MSMTP_OVH_PWD/${MSMTP_OVH_PWD}/g" /etc/msmtprc && \
 	chown www-data:www-data /etc/msmtprc && \
 	touch /var/log/msmtp.log && \
 	chown www-data:www-data /var/log/msmtp.log
+
+# Copy Gmail OAuth utilities
+COPY getmail-gmail-xoauth-tokens /usr/local/bin/
+RUN mkdir /etc/oauth/
+COPY gmail.json /etc/oauth/gmail.json
+RUN sed -i "s/\$CLIENT_ID/${GCP_CLIENT_ID}/g" /etc/oauth/gmail.json && \
+	sed -i "s/\$CLIENT_SECRET/${GCP_CLIENT_SECRET}/g" /etc/oauth/gmail.json
 
 # Add /etc/vim/vimrc.local
 RUN echo "runtime! defaults.vim" > /etc/vim/vimrc.local \

@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
 
   wiki-sinp-nginx:
@@ -12,6 +10,7 @@ services:
     depends_on:
       - wiki-sinp-dokuwiki
     environment:
+      TZ: ${TZ:-Europe/Paris}
       VIRTUAL_HOST: "${WIKI_DOMAIN}"
       LETSENCRYPT_HOST: "${WIKI_DOMAIN}"
     volumes:
@@ -21,6 +20,7 @@ services:
       - plugins-sinp-dokuwiki-storage:/var/www/html/lib/plugins/
       - conf-sinp-dokuwiki-storage:/var/www/html/conf
       - tpl-sinp-dokuwiki-storage:/var/www/html/lib/tpl/
+      - oauth-sinp-dokuwiki-storage:/etc/oauth/
 
   wiki-sinp-dokuwiki:
     build:
@@ -30,10 +30,13 @@ services:
         # To load backups, uncomment line in dockerfile and set a date instead of "None"
         BACKUP_DATE: "${BACKUP_DATE}"
         MSMTP_OVH_PWD: "${MSMTP_OVH_PWD}"
+        GCP_CLIENT_ID: "${GCP_CLIENT_ID}"
+        GCP_CLIENT_SECRET: "${GCP_CLIENT_SECRET}"
     image: cbna/wiki-sinp:dokuwiki-8.1.22-fpm-bookworm
     # https://hub.docker.com/_/php
     container_name: wiki-sinp-dokuwiki
-    env_file: .env
+    environment:
+      TZ: ${TZ:-Europe/Paris}
     restart: unless-stopped
     expose:
       - 9000
@@ -43,6 +46,7 @@ services:
       - plugins-sinp-dokuwiki-storage:/var/www/html/lib/plugins/
       - conf-sinp-dokuwiki-storage:/var/www/html/conf
       - tpl-sinp-dokuwiki-storage:/var/www/html/lib/tpl/
+      - oauth-sinp-dokuwiki-storage:/etc/oauth/
 
   wiki-sinp-volumerize:
     image: blacklabelops/volumerize:1.7.1
@@ -73,6 +77,7 @@ services:
       - plugins-sinp-dokuwiki-storage:/source/wiki-sinp-plugins:ro
       - conf-sinp-dokuwiki-storage:/source/wiki-sinp-conf:ro
       - tpl-sinp-dokuwiki-storage:/source/wiki-sinp-tpl:ro
+      - oauth-sinp-dokuwiki-storage:/etc/oauth/
 
 volumes:
   root-sinp-dokuwiki-storage:
@@ -81,6 +86,7 @@ volumes:
   conf-sinp-dokuwiki-storage:
   tpl-sinp-dokuwiki-storage:
   local-sinp-backup-cache-storage:
+  oauth-sinp-dokuwiki-storage:
 
 networks:
   default:
