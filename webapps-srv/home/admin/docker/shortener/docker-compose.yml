@@ -1,0 +1,86 @@
+x-logging:
+  &default-logging
+  driver: "json-file"
+  options:
+    max-size: 4m
+    max-file: 10
+
+services:
+  shortener-api:
+    image: shlinkio/shlink:4.4.2
+    # https://hub.docker.com/r/shlinkio/shlink
+    container_name: shortener-api
+    hostname: "${HOSTNAME}_shortener-api"
+    restart: unless-stopped
+    depends_on:
+      - shortener-database
+    expose:
+      - 8080
+    logging: *default-logging
+    environment:
+      TZ: ${TZ:-"Europe/Paris"}
+      DEFAULT_DOMAIN: ${SHLINK_DEFAULT_DOMAIN:-"go.cbn-alpin.fr"}
+      IS_HTTPS_ENABLED: ${SHLINK_IS_HTTPS_ENABLED:-"true"}
+      GEOLITE_LICENSE_KEY: ${SHLINK_GEOLITE_LICENSE_KEY}
+      DB_DRIVER: ${DB_DRIVER:-"maria"}
+      DB_USER: ${DB_USER:-"shlink"}
+      DB_NAME: ${DB_NAME:-"shlink"}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: ${DB_HOST:-"shortener-database"}
+      SHELL_VERBOSITY: 3
+      INITIAL_API_KEY: ${SHLINK_API_KEY}
+      VIRTUAL_HOST: "${SHLINK_DEFAULT_DOMAIN:-go.cbn-alpin.fr}"
+      LETSENCRYPT_HOST: "${SHLINK_DEFAULT_DOMAIN:-go.cbn-alpin.fr}"
+
+  shortener-web-client:
+    image: shlinkio/shlink-web-client:4.3.0
+    # https://hub.docker.com/r/shlinkio/shlink-web-client/tags
+    restart: unless-stopped
+    container_name: shortener-web-client
+    hostname: "${HOSTNAME}_shortener-web-client"
+    depends_on:
+      - shortener-api
+    expose:
+      - 8080
+    environment:
+      SHLINK_SERVER_URL : ${SHLINK_SERVER_URL}
+      TZ: ${TZ:-Europe/Paris}
+      VIRTUAL_HOST: "${SHLINK_WEPAPP_DOMAIN:-go-app.cbn-alpin.fr}"
+      LETSENCRYPT_HOST: "${SHLINK_WEBAPP_DOMAIN:-go-app.cbn-alpin.fr}"
+    volumes:
+      - ./shlink/config/:/usr/share/nginx/html/conf.d/
+
+  shortener-database:
+    image: mariadb:11.6.2-noble
+    # https://hub.docker.com/_/mariadb
+    container_name: shortener-database
+    hostname: "${HOSTNAME}_shortener-database"
+    restart: unless-stopped
+    expose:
+      - 3306
+    healthcheck:
+      test: ["CMD-SHELL", "healthcheck.sh --connect --innodb_initialized"]
+      interval: 1m30s
+      timeout: 20s
+      retries: 3
+    logging: *default-logging
+    environment:
+      TZ: ${TZ:-Europe/Paris}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${MARIADB_DATABASE}
+      MARIADB_USER: ${MARIADB_USER}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+      # See : https://github.com/docker-library/mariadb/issues/160
+      MARIADB_INITDB_SKIP_TZINFO: "yes"
+    volumes:
+      - db-shortener-storage:/var/lib/mysql
+      - ./mariadb/initdb.d/:/docker-entrypoint-initdb.d/
+
+volumes:
+  db-shortener-storage:
+
+networks:
+  default:
+    name: nginx-proxy
+    external: true
+
