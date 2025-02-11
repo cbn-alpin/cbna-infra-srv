@@ -122,8 +122,8 @@ services:
       MARIADB_INITDB_SKIP_TZINFO: "yes"
     healthcheck:
       test: ["CMD-SHELL", "healthcheck.sh --connect --innodb_initialized"]
-      interval: 10s
-      timeout: 5s
+      interval: 1m30s
+      timeout: 20s
       retries: 3
     logging: *default-logging
     volumes:
