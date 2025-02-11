@@ -1,5 +1,3 @@
-version: "3.9"
-
 x-logging:
   &default-logging
   driver: "json-file"
@@ -8,8 +6,9 @@ x-logging:
     max-file: 10
 
 services:
-  postgresql:
-    image: docker.io/library/postgres:12-alpine
+  authentik-postgresql:
+    image: docker.io/library/postgres:16-alpine
+    container_name: authentik-postgresql
     restart: unless-stopped
     env_file:
       - .env
@@ -17,6 +16,8 @@ services:
       POSTGRES_PASSWORD: ${PG_PASS:?database password required}
       POSTGRES_USER: ${PG_USER:-authentik}
       POSTGRES_DB: ${PG_DB:-authentik}
+    ports:
+      - "${POSTGRES_HOST_IP-127.0.0.1}:${POSTGRES_HOST_PORT-5432}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
       start_period: 20s
@@ -26,9 +27,11 @@ services:
     logging: *default-logging
     volumes:
       - db-authentik-storage:/var/lib/postgresql/data
+    #network_mode: none
 
-  redis:
+  authentik-redis:
     image: docker.io/library/redis:alpine
+    container_name: authentik-redis
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
@@ -41,12 +44,17 @@ services:
       - redis-authentik-storage:/data
     command: --save 60 1 --loglevel warning
 
-  server:
-    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2024.4.2}
+  authentik-server:
+    #image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2024.10.0}
+    build:
+      context: ./authentik/build
+      dockerfile: Dockerfile
+    image: cbna/authentik:2024.10.0
+    container_name: authentik-server
     restart: unless-stopped
     depends_on:
-      - postgresql
-      - redis
+      - authentik-postgresql
+      - authentik-redis
     # WARNING: ports 9000 AND 9443 must be exposed for websocket to work properly
     expose:
       - 9000
@@ -55,10 +63,11 @@ services:
       - .env
     environment:
       VIRTUAL_HOST: "${SITE_DOMAIN_ALL}"
-      VIRTUAL_PORT: 9000
+      VIRTUAL_PORT: 9443
+      VIRTUAL_PROTO: "https"
       LETSENCRYPT_HOST: "${SITE_DOMAIN_ALL}"
-      AUTHENTIK_REDIS__HOST: redis
-      AUTHENTIK_POSTGRESQL__HOST: postgresql
+      AUTHENTIK_REDIS__HOST: authentik-redis
+      AUTHENTIK_POSTGRESQL__HOST: authentik-postgresql
       AUTHENTIK_POSTGRESQL__USER: ${PG_USER:-authentik}
       AUTHENTIK_POSTGRESQL__NAME: ${PG_DB:-authentik}
       AUTHENTIK_POSTGRESQL__PASSWORD: ${PG_PASS}
@@ -71,17 +80,22 @@ services:
       - ./authentik/dbip-city-lite-2023-10.mmdb:/geoip/GeoLite2-City.mmdb
     command: server
 
-  worker:
-    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2024.4.2}
+  authentik-worker:
+    #image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2024.10.0}
+    build:
+      context: ./authentik/build
+      dockerfile: Dockerfile
+    image: cbna/authentik:2024.10.0
+    container_name: authentik-worker
     restart: unless-stopped
     depends_on:
-      - postgresql
-      - redis
+      - authentik-postgresql
+      - authentik-redis
     env_file:
       - .env
     environment:
-      AUTHENTIK_REDIS__HOST: redis
-      AUTHENTIK_POSTGRESQL__HOST: postgresql
+      AUTHENTIK_REDIS__HOST: authentik-redis
+      AUTHENTIK_POSTGRESQL__HOST: authentik-postgresql
       AUTHENTIK_POSTGRESQL__USER: ${PG_USER:-authentik}
       AUTHENTIK_POSTGRESQL__NAME: ${PG_DB:-authentik}
       AUTHENTIK_POSTGRESQL__PASSWORD: ${PG_PASS}
@@ -102,7 +116,9 @@ services:
 
 volumes:
   db-authentik-storage:
+    driver: local
   redis-authentik-storage:
+    driver: local
 
 networks:
   default:
