@@ -1,4 +1,3 @@
-version: "3.9"
 # Source: https://github.com/kaleidos-ventures/taiga-docker/blob/main/docker-compose.yml
 
 x-environment:
@@ -51,6 +50,8 @@ services:
       timeout: 15s
       retries: 5
       start_period: 3s
+    ports:
+      - "${POSTGRES_HOST_IP-127.0.0.1}:${POSTGRES_HOST_PORT-5432}:5432"
     networks:
       - taiga
     volumes:
