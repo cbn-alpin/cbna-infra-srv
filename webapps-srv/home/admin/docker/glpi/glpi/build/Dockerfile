@@ -1,7 +1,7 @@
 #Based Image
 FROM php:8.1.22-fpm-bookworm
 
-LABEL maintainer "Jean-Pascal MILCENT <jp.milcent@cbn-alpin.fr>"
+LABEL maintainer "Jean-Pascal MILCENT <jpm@clapas.org>"
 
 ARG TZ=${TZ:-Europe/Paris}
 ARG APP_NAME=${APP_NAME:-'glpi'}

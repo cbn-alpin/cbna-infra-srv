@@ -10,7 +10,7 @@ TODAY=$(date +"%Y-%m-%d")
 BKP_DIR="/backups"
 
 # Clean up backups files older than 1 day
-find  ${BKP_DIR}/ -type f -mtime +1 -regex '.*\.(backup\.tar\.bz2|sql-dump\.gz)$' -execdir rm -- '{}' \;
+find  ${BKP_DIR}/ -type f -mtime +1 -regextype posix-extended -regex '.*\.(backup\.tar\.bz2|sql-dump\.gz)$' -execdir rm -- '{}' \;
 
 # Saved data depend on current container
 if [[ "${HOSTNAME}" =~ ^.*glpi$ ]]; then
