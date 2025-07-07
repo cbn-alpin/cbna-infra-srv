@@ -1,0 +1,26 @@
+x-logging:
+  &default-logging
+  driver: "json-file"
+  options:
+    max-size: 4m
+    max-file: 10
+
+services:
+  chartdb:
+    image: ghcr.io/chartdb/chartdb:1.10.0
+    # https://hub.docker.com/r/shlinkio/shlink
+    container_name: chartdb
+    hostname: "${HOSTNAME}_chartdb"
+    restart: unless-stopped
+    expose:
+      - 8080
+    logging: *default-logging
+    environment:
+      TZ: ${TZ:-"Europe/Paris"}
+      VIRTUAL_HOST: "${CHARTDB_DEFAULT_DOMAIN:-db.cbn-alpin.fr}"
+      LETSENCRYPT_HOST: "${CHARTDB_DEFAULT_DOMAIN:-db.cbn-alpin.fr}"
+
+networks:
+  default:
+    name: nginx-proxy
+    external: true  

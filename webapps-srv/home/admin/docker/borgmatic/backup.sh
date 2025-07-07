@@ -9,6 +9,8 @@ set -o pipefail
 
 cd "$(dirname "$0")"
 
+cd "$(dirname "$0")"
+
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH"
 
 # nom logique de la sauvegarde

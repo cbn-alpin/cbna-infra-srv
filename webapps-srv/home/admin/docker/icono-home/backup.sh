@@ -2,7 +2,7 @@
 # Auteur : Arnaud Ungaro
 # Structure : CBNA (Conservatoire Botanique National Alpin)
 # Année : 2025
-# Script de sauvegarde de l’instance ICONO-HOME 
+# Script de sauvegarde de l’instance ICONO-HOME (site statique NGINX)
 
 set -e
 set -o pipefail
@@ -105,3 +105,4 @@ set -e
 echo ""
 echo "Sauvegarde terminée avec succès."
 exit 0
+

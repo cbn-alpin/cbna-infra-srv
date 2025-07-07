@@ -2,7 +2,7 @@
 # Auteur : Arnaud Ungaro
 # Structure : CBNA (Conservatoire Botanique National Alpin)
 # Année : 2025
-# Script de sauvegarde de l’instance PGADMIN 
+# Script de sauvegarde de l’instance PGADMIN (interface web de gestion PostgreSQL)
 
 set -e
 set -o pipefail
