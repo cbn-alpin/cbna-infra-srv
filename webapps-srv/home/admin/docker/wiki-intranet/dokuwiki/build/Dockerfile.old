@@ -6,15 +6,11 @@ LABEL author="Jean-Pascal MILCENT" \
 
 ARG BACKUP_DATE
 ARG MSMTP_OVH_PWD
-ARG GCP_CLIENT_ID
-ARG GCP_CLIENT_SECRET
-ARG GCP_REFRESH_TOKEN
 
-ENV DW_VERSION=2025-05-14a
+ENV DW_VERSION=2023-04-04a
 ENV DW_DOWNLOAD_URL=https://download.dokuwiki.org/src/dokuwiki/dokuwiki-${DW_VERSION}.tgz
 # On local machine, download file and get md5 with : md5sum dokuwiki-${DW_VERSION}.tgz
-ENV DW_MD5_CHECKSUM=b77bd2f74af1fb0d8f57125864caf6a6
-
+ENV DW_MD5_CHECKSUM=8a68393e689bf6d1130bfe660a19fc6b
 ENV HTML_PATH /var/www/html
 
 RUN apt-get update && \
@@ -26,8 +22,7 @@ RUN apt-get update && \
 		libfreetype6-dev \
         libjpeg62-turbo-dev \
         libpng-dev \
-		msmtp msmtp-mta bsd-mailx mailutils \
-		python3 && \
+		msmtp msmtp-mta bsd-mailx mailutils && \
     docker-php-ext-install -j$(nproc) iconv && \
     docker-php-ext-configure gd --with-freetype=/usr/include/ --with-jpeg=/usr/include/ && \
     docker-php-ext-install -j$(nproc) gd && \
@@ -47,13 +42,6 @@ RUN sed -i "s/\$MSMTP_OVH_PWD/${MSMTP_OVH_PWD}/g" /etc/msmtprc && \
 	chown www-data:www-data /etc/msmtprc && \
 	touch /var/log/msmtp.log && \
 	chown www-data:www-data /var/log/msmtp.log
-
-# Copy Gmail OAuth utilities
-COPY getmail-gmail-xoauth-tokens /usr/local/bin/
-RUN mkdir /etc/oauth/
-COPY gmail.json /etc/oauth/gmail.json
-RUN sed -i "s/\$CLIENT_ID/${GCP_CLIENT_ID}/g" /etc/oauth/gmail.json && \
-	sed -i "s/\$CLIENT_SECRET/${GCP_CLIENT_SECRET}/g" /etc/oauth/gmail.json
 
 # Add /etc/vim/vimrc.local
 RUN echo "runtime! defaults.vim" > /etc/vim/vimrc.local \
@@ -78,7 +66,9 @@ RUN rm -f dokuwiki.tgz
 
 RUN 'cp' -af dokuwiki-${DW_VERSION}/* ${HTML_PATH}/
 #RUN rm -fR dokuwiki-${DW_VERSION}/
-ADD ./${BACKUP_DATE}_wiki-sinp_backup.tar.bz2 ${HTML_PATH}
+ADD ./${BACKUP_DATE}_wiki-intranet_conf_pages.tar.bz2 ${HTML_PATH}
+ADD ./${BACKUP_DATE}_wiki-intranet_media.tar.bz2 ${HTML_PATH}
+ADD ./${BACKUP_DATE}_wiki-intranet_plugins_templates.tar.bz2 ${HTML_PATH}
 RUN chown -R www-data: ${HTML_PATH}
 
 # Copy entrypoint script. Entypoint script upgade Dokuwiki files in named Volume

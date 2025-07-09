@@ -7,10 +7,11 @@ LABEL author="Jean-Pascal MILCENT" \
 ARG BACKUP_DATE
 ARG MSMTP_OVH_PWD
 
-ENV DW_VERSION=2023-04-04a
+ENV DW_VERSION=2025-05-14a
 ENV DW_DOWNLOAD_URL=https://download.dokuwiki.org/src/dokuwiki/dokuwiki-${DW_VERSION}.tgz
 # On local machine, download file and get md5 with : md5sum dokuwiki-${DW_VERSION}.tgz
-ENV DW_MD5_CHECKSUM=8a68393e689bf6d1130bfe660a19fc6b
+ENV DW_MD5_CHECKSUM=b77bd2f74af1fb0d8f57125864caf6a6
+
 ENV HTML_PATH /var/www/html
 
 RUN apt-get update && \

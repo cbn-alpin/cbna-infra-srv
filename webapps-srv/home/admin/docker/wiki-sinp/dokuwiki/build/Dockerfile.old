@@ -10,11 +10,10 @@ ARG GCP_CLIENT_ID
 ARG GCP_CLIENT_SECRET
 ARG GCP_REFRESH_TOKEN
 
-ENV DW_VERSION=2025-05-14a
+ENV DW_VERSION=2023-04-04a
 ENV DW_DOWNLOAD_URL=https://download.dokuwiki.org/src/dokuwiki/dokuwiki-${DW_VERSION}.tgz
 # On local machine, download file and get md5 with : md5sum dokuwiki-${DW_VERSION}.tgz
-ENV DW_MD5_CHECKSUM=b77bd2f74af1fb0d8f57125864caf6a6
-
+ENV DW_MD5_CHECKSUM=8a68393e689bf6d1130bfe660a19fc6b
 ENV HTML_PATH /var/www/html
 
 RUN apt-get update && \
