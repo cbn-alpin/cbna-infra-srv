@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   analytics-nginx:
     image: nginx:1.24.0-bullseye
@@ -21,7 +19,9 @@ services:
     build:
       context: ./matomo/build
       dockerfile: Dockerfile
-    image: matomo:4.14.2-fpm
+      args:
+        MSMTP_OVH_PWD: "${MSMTP_OVH_PWD}"
+    image: cbn-alpin/matomo:5.1.1-fpm
     # https://hub.docker.com/_/matomo
     container_name: analytics-matomo
     restart: unless-stopped

@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   s3-minio-api:
     image: quay.io/minio/minio:RELEASE.2023-09-04T19-57-37Z
@@ -18,11 +16,13 @@ services:
       MINIO_ADDRESS: '0.0.0.0:9000'
       MINIO_CONSOLE_ADDRESS: '0.0.0.0:9001'
       MINIO_SERVER_URL: "https://api-s3.cbn-alpin.fr"
-      VIRTUAL_HOST: api-s3.cbn-alpin.fr
-      LETSENCRYPT_HOST: api-s3.cbn-alpin.fr
+      MINIO_BROWSER_REDIRECT_URL: "https://console-s3.cbn-alpin.fr"
+      VIRTUAL_HOST: api-s3.cbn-alpin.fr,s3.cbn-alpin.fr
+      VIRTUAL_PORT: 9000
+      LETSENCRYPT_HOST: api-s3.cbn-alpin.fr,s3.cbn-alpin.fr
     volumes:
       - /data/s3-data:/data
-    command: minio server /data
+    command: minio server /data --console-address ":9001"
 
   s3-minio-console:
     image: quay.io/minio/minio:RELEASE.2023-09-04T19-57-37Z
@@ -36,11 +36,13 @@ services:
       MINIO_ADDRESS: '0.0.0.0:9000'
       MINIO_CONSOLE_ADDRESS: '0.0.0.0:9001'
       MINIO_BROWSER_REDIRECT_URL: "https://console-s3.cbn-alpin.fr"
+      MINIO_SERVER_URL: "https://api-s3.cbn-alpin.fr"
       VIRTUAL_HOST: console-s3.cbn-alpin.fr
-      LETSENCRYPT_HOST: console-s3.cbn-alpin.fr,s3.cbn-alpin.fr
+      VIRTUAL_PORT: 9001
+      LETSENCRYPT_HOST: console-s3.cbn-alpin.fr
     volumes:
       - /data/s3-data:/data
-    command: minio server /data
+    command: minio server /data --console-address ":9001"
 
 networks:
   default:

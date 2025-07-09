@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
 
   healthcheck-postgres:
@@ -25,9 +23,9 @@ services:
 
   healthcheck-web:
     # USAGE :
-    # Create Healthcheck super user with: `docker compose run web /opt/healthchecks/manage.py createsuperuser`
+    # Create Healthcheck super user with: `docker compose run healthcheck-web /opt/healthchecks/manage.py createsuperuser`
     # Add Telegram integration with: `docker compose run healthcheck-web /opt/healthchecks/manage.py settelegramwebhook`
-    image: healthchecks/healthchecks:v2.9.2
+    image: healthchecks/healthchecks:v3.6
     # See: https://hub.docker.com/r/healthchecks/healthchecks
     container_name: healthcheck-web
     restart: unless-stopped

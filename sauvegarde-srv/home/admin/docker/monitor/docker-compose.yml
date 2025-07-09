@@ -1,8 +1,6 @@
-version: "3.9"
-
 services:
   monitor-influxdb:
-    image: influxdb:2.7.1
+    image: influxdb:2.7.6
     # https://hub.docker.com/_/influxdb
     container_name: monitor-influxdb
     restart: unless-stopped
@@ -22,15 +20,28 @@ services:
     healthcheck:
       test: "curl -f http://localhost:8086/ping"
       interval: 5s
-      timeout: 10s
+      timeout: 10s 
       retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1024M
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 1000000
+        hard: 1000000
     volumes:
-      - influxdb-storage:/var/lib/influxdb/data
+      #- influxdb-storage:/var/lib/influxdb/data
       - data-influxdb2-storage:/var/lib/influxdb2
       - conf-influxdb2-storage:/etc/influxdb2
 
   monitor-grafana:
-    image: grafana/grafana:9.5.2
+    image: grafana/grafana:9.5.5
     # https://hub.docker.com/r/grafana/grafana
     container_name: monitor-grafana
     restart: unless-stopped
@@ -67,7 +78,7 @@ services:
       - monitoring
 
   monitor-grafana-backup:
-    image: ysde/docker-grafana-backup-tool:1.3.0
+    image: ysde/docker-grafana-backup-tool:1.3.1
     # https://hub.docker.com/r/ysde/docker-grafana-backup-tool
     container_name: monitor-grafana-backup
     restart: "no"
@@ -79,10 +90,10 @@ services:
       - monitoring
     environment:
       - GRAFANA_TOKEN=${GRAFANA_TOKEN}
-      - GRAFANA_URL=http://localhost:3000
+      - GRAFANA_URL=http://monitor-grafana:3000
       - GRAFANA_ADMIN_ACCOUNT=${GRAFANA_ADMIN_ACCOUNT}
       - GRAFANA_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
-      - VERIFY_SSL=False
+      - VERIFY_SSL=False 
     volumes:
        - ./grafana/backup:/opt/grafana-backup-tool/_OUTPUT_
 

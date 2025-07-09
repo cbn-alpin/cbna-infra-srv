@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   borgmatic:
     build:
@@ -8,7 +6,7 @@ services:
       args:
         - MAILTO=${MAILTO}
         - PGSQL_MAJOR_VERSION=${PGSQL_MAJOR_VERSION}
-    image: cbn-alpin/borgmatic:1.0.0
+    image: cbn-alpin/borgmatic:2024-09-04
     # https://hub.docker.com/r/b3vis/borgmatic/
     container_name: borgmatic
     restart: unless-stopped
