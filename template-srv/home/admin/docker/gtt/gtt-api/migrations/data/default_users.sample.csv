@@ -1,0 +1,2 @@
+email	first_name	last_name	is_admin	hashed_password
+admin@example.com	Admin	User	TRUE	21232f297a57a5a743894a0e4a801fc3

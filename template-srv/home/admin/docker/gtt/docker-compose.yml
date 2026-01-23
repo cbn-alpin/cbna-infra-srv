@@ -1,0 +1,168 @@
+x-depends_on: &default-depends_on
+  gtt-postgres:
+    condition: service_healthy
+
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: 4m
+    max-file: 10
+
+services:
+
+  gtt-postgres:
+    build:
+      context: ./postgres/build/
+      dockerfile: Dockerfile
+      args:
+        - TZ=${TZ:-Europe/Paris}
+    image: gtt-postgres
+    container_name: gtt-postgres
+    hostname: "${HOSTNAME}_gtt-postgres"
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-Europe/Paris}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_HOST_IP-127.0.0.1}:${POSTGRES_HOST_PORT-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready --quiet --username=${POSTGRES_USER} --dbname=${POSTGRES_DB} || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging: *default-logging
+    volumes:
+      - ./postgres/initdb:/docker-entrypoint-initdb.d/
+      - ./postgres/postgresql.conf:/etc/postgresql/postgresql.conf
+      - data-postgres-storage:/var/lib/postgresql/data
+      - socket-postgres-storage:/var/run/postgresql
+    command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
+
+  gtt-postgres-restore:
+    image: postgres:15.3-bookworm
+    container_name: gtt-postgres-restore
+    restart: "no"
+    profiles: ["restore"]
+    depends_on:
+      gtt-postgres:
+        condition: service_healthy
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST: gtt-postgres
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_RESTORE_FILE: ${POSTGRES_RESTORE_FILE}
+    volumes:
+      - ${POSTGRES_RESTORE_DIR-./postgres/restore}:/restore/
+      - socket-postgres-storage:/var/run/postgresql
+    command: ["/restore/restore.sh", "-d", "${POSTGRES_RESTORE_FILE}"]
+
+  gtt-pgadmin:
+    image: dpage/pgadmin4:9.11
+    container_name: gtt-pgadmin
+    hostname: "${HOSTNAME}_gtt-pgadmin"
+    restart: unless-stopped
+    depends_on: *default-depends_on
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "${PGADMIN_DEFAULT_EMAIL}"
+      PGADMIN_DEFAULT_PASSWORD: "${PGADMIN_DEFAULT_PASSWORD}"
+      VIRTUAL_HOST: "${PGADMIN_DOMAIN}"
+      LETSENCRYPT_HOST: "${PGADMIN_DOMAIN}"
+    expose:
+      - 80
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --output-document - http://localhost:80/misc/ping"]
+      interval: 10s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+    logging: *default-logging
+    volumes:
+      - ./postgres/backups/:/bkp
+      - data-admindb-storage:/var/lib/pgadmin
+
+  gtt-webhook:
+    build:
+      context: ./webhook/build/
+      dockerfile: Dockerfile
+      args:
+        - TZ=${TZ:-Europe/Paris}
+    image: cbna/almir/webhook:2.8.2
+    container_name: gtt-webhook
+    hostname: "${HOSTNAME}_gtt-webhook"
+    restart: unless-stopped
+    expose:
+      - 9001
+    environment:
+      VIRTUAL_HOST: ${WEBHOOK_DOMAIN}
+      LETSENCRYPT_HOST: ${WEBHOOK_DOMAIN}
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://localhost:9001/ || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+    logging: *default-logging
+    command: ["-port=9001", "-verbose", "-hooks=/etc/webhook/hooks.json", "-hotreload"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./webhook/hooks.json:/etc/webhook/hooks.json
+      - ./webhook/scripts/:/var/scripts/:ro
+      - ./../:/var/docker-repos/:ro
+
+  gtt-api:
+    image: cbna/gtt-api:develop
+    container_name: gtt-api
+    hostname: "${HOSTNAME}_gtt-api"
+    restart: unless-stopped
+    depends_on: *default-depends_on
+    expose:
+      - 5001
+    environment:
+      TZ: ${TZ:-Europe/Paris}
+      VIRTUAL_HOST: "${GTT_DOMAIN_API}"
+      LETSENCRYPT_HOST: "${GTT_DOMAIN_API}"
+      FLASK_ENV: "production"
+    env_file:
+      - .env.api
+    logging: *default-logging
+    volumes:
+      - config-api-storage:/home/app/web/config/
+      - logs-api-storage:/var/logs/
+      - ./gtt-api/migrations/data/default_users.csv:/home/app/web/migrations/data/default_users.csv
+
+  gtt-webapp:
+    image: cbna/gtt-webapp:develop
+    container_name: gtt-webapp
+    hostname: "${HOSTNAME}_gtt-webapp"
+    restart: unless-stopped
+    depends_on:
+      - gtt-api
+    expose:
+      - 80
+    environment:
+      TZ: ${TZ:-Europe/Paris}
+      VIRTUAL_HOST: "${GTT_DOMAIN_WEB}"
+      LETSENCRYPT_HOST: "${GTT_DOMAIN_WEB}"
+    env_file:
+      - .env.webapp
+    healthcheck:
+      test: curl --fail --silent http://localhost:80/ || exit 1
+      interval: 10s
+      timeout: 10s
+      retries: 3
+    logging: *default-logging
+
+volumes:
+  data-postgres-storage:
+  socket-postgres-storage:
+  data-admindb-storage:
+  config-api-storage:
+  logs-api-storage:
+
+networks:
+  default:
+    name: nginx-proxy
+    external: true
