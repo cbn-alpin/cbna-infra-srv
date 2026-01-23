@@ -1,0 +1,53 @@
+[
+  {
+    "id": "your-deploy-endpoint",
+    "execute-command": "/etc/webhook/your-deploy-endpoint",
+    "response-message": "Restarting container",
+    "pass-environment-to-command":
+    [
+        {
+            "envname": "DOCKER_REGISTRY",
+            "source": "payload",
+            "name": "DOCKER_REGISTRY"
+        },
+        {
+            "envname": "DOCKER_USERNAME",
+            "source": "payload",
+            "name": "DOCKER_USERNAME"
+        },
+        {
+            "envname": "DOCKER_PASSWORD",
+            "source": "payload",
+            "name": "DOCKER_PASSWORD"
+        },
+        {
+            "envname": "DOCKER_IMAGE",
+            "source": "payload",
+            "name": "DOCKER_IMAGE"
+        }
+    ],
+    "pass-file-to-command":
+    [
+      {
+        "source": "payload",
+        "name": "ENV_FILE",
+        "envname": "ENV_FILE",
+        "base64decode": true,
+      }
+    ],
+    "trigger-rule-mismatch-http-response-code": 411,
+    "trigger-rule":
+    {
+      "match":
+      {
+        "type": "value",
+        "value": "{{ here goes value of WEBHOOK_TOKEN from Github secrets }}",
+        "parameter":
+        {
+          "source": "header",
+          "name": "X-Token"
+        }
+      }
+    }
+  }
+]
