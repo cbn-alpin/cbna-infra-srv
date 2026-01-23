@@ -10,6 +10,7 @@
 .env*
 msmtp.env
 !.env.sample
+!.env.*.sample
 *.mmdb
 *.pem
 borgmatic.yml
