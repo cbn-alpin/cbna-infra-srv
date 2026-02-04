@@ -1,0 +1,72 @@
+# /etc/cron.d/backups: execute all backups tasks
+# Copy this file into /etc/cron.d/ without .cron extension : cp backups.cron /etc/cron.d/backups
+# WARNING: not use "." or "-" in script filename. With this characters, the script will not be
+# executed by Cron !?
+
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+# MAILFROM doesn't work now, use alternative below
+MAILTO=adminsys@cbn-alpin.fr
+#MAILFROM=mailer@cbn-alpin.fr
+
+# ==================== TÂCHES PLANIFIÉES DE SAUVEGARDE DES CONTAINERS DOCKER ====================
+# Sauvegardes quotidiennes planifiées à partir de 1h00, avec rotation automatique des anciennes données.
+# Les sauvegardes des wikis sont particulièrement longues.
+# Un espacement de 15 minutes est laissé entre chaque tâche pour éviter les chevauchements.
+
+# m h dom mon dow user  command
+# Sauvegarde de l’instance WordPress de test (cms-cbna-wordpress-test)
+0 1 * * * admin /home/admin/docker/cms-cbna-wordpress-test/backup.sh > /dev/null 2>&1
+
+# Sauvegarde de l’instance WordPress de production (cms-cbna-wordpress)
+5 1 * * * admin /home/admin/docker/cms-cbna-wordpress/backup.sh > /dev/null 2>&1
+
+# Sauvegarde de l’instance Joomla (cms-cbna-joomla) — script désactivé car le conteneur est arrêté
+# 10 1 * * * admin /home/admin/docker/cms-cbna-joomla/backup-cms-cbna-joomla.sh > /dev/null 2>&1
+
+# Sauvegarde de l’instance Taiga (taiga)
+15 1 * * * admin /home/admin/docker/taiga/backup.sh > /dev/null 2>&1
+
+# Sauvegarde de l’instance Authentik (authentik)
+20 1 * * * admin /home/admin/docker/authentik/backup.sh > /dev/null 2>&1
+
+# Sauvegarde de l’instance GLPI (glpi)
+25 1 * * * admin /home/admin/docker/glpi/backup.sh > /dev/null 2>&1
+
+# Sauvegarde de l’instance GefiProj (gefiproj)
+30 1 * * * admin /home/admin/docker/gefiproj/backup.sh > /dev/null 2>&1
+
+# Sauvegarde de l’instance ICONO-HOME (icono-home)
+35 1 * * * admin /home/admin/docker/icono-home/backup.sh > /dev/null 2>&1
+
+# Sauvegarde de l’instance PGADMIN (pgadmin)
+40 1 * * * admin /home/admin/docker/pgadmin/backup.sh > /dev/null 2>&1
+
+# Sauvegarde de la stack NGINX Proxy (proxy)
+45 1 * * * admin /home/admin/docker/proxy/backup.sh > /dev/null 2>&1
+
+# Sauvegarde de l’instance SAISIE-FLORE (saisie-flore)
+50 1 * * * admin /home/admin/docker/saisie-flore/backup.sh > /dev/null 2>&1
+
+# Sauvegarde de l’instance SHORTENER (shortener)
+55 1 * * * admin /home/admin/docker/shortener/backup.sh > /dev/null 2>&1
+
+# Sauvegarde de l’instance TELEGRAF (telegraf)
+0 2 * * * admin /home/admin/docker/telegraf/backup.sh > /dev/null 2>&1
+
+# Sauvegarde de l’instance WIKI-INTRANET (wiki-intranet)
+5 2 * * * admin /home/admin/docker/wiki-intranet/backup.sh > /dev/null 2>&1
+
+# Sauvegarde de l’instance WIKI-SINP (wiki-sinp)
+20 2 * * * admin /home/admin/docker/wiki-sinp/backup.sh > /dev/null 2>&1
+
+# Sauvegarde de l’instance WIKI-JARDINALP (wiki-jardinalp)
+35 2 * * * admin /home/admin/docker/wiki-jardinalp/backup.sh > /dev/null 2>&1
+
+# Sauvegarde de l’instance BORG-MATIC (borgmatic)
+50 2 * * * admin /home/admin/docker/borgmatic/backup.sh > /dev/null 2>&1
+
+# Sauvegarde de l’instance GTT
+15 3 * * * admin /home/admin/docker/gtt/backup.sh > /dev/null 2>&1
+
+# An empty line is required at the end of this file for a valid cron file.
