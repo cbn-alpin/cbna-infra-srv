@@ -17,3 +17,6 @@ borgmatic.yml
 ntfy.yml
 aliases.txt
 .htpasswd
+
+# Added by ggshield
+.cache_ggshield
