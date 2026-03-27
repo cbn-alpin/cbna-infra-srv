@@ -38,10 +38,9 @@ Tous les fichiers présents dans `./mariadb/initdb/` seront exécutés et servir
  `wiki-jardinalp-mariadb`, il faut au préalable supprimer le volume nommé `db-jardinalp-wiki-storage`.
  Assurez vous d'avoir un fichier de sauvegarde SQL fonctionnel au préalable !
 
-
 ## Sauvegarde wiki-jardinalp
 
-Script Bash de sauvegarde de l'instance `wiki-jardinalp`  
+Script Bash de sauvegarde de l'instance `wiki-jardinalp`
 Fonctionne depuis l’hôte, sans modification des conteneurs existants.
 
 Le script effectue :
@@ -56,7 +55,7 @@ Le script effectue :
   - `wiki-jardinalp.localdirs.tar.gz` (dossiers locaux)
 - une rotation automatique des sauvegardes (suppression des sauvegardes trop anciennes)
 
-Aucune donnée externe ni volume non explicitement monté n’est inclus.  
+Aucune donnée externe ni volume non explicitement monté n’est inclus.
 Le script se contente de capturer l’état actuel du wiki et de son environnement local tel que configuré dans le dossier `wiki-jardinalp`.
 
 ### Structure de sortie

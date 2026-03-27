@@ -1,4 +1,4 @@
-FROM php:7.3.33-fpm-bullseye
+FROM php:8.4.10-fpm-bookworm
 
 LABEL maintainer "Jean-Pascal MILCENT <jpm@clapas.org>"
 
@@ -13,6 +13,8 @@ ARG APP_NAME="${APP_NAME}"
 ARG APP_REPO="${APP_REPO}"
 ARG APP_VERSION="${APP_VERSION}"
 ARG APP_VERSION_CHECKSUM="${APP_VERSION_CHECKSUM}"
+ARG CAP_SECRET_KEY="${CAP_SECRET_KEY}"
+ARG CAP_SITE_KEY="${CAP_SITE_KEY}"
 ARG MSMTP_OVH_HOST="${MSMTP_OVH_HOST}"
 ARG MSMTP_OVH_EMAIL="${MSMTP_OVH_EMAIL}"
 ARG MSMTP_OVH_PWD="${MSMTP_OVH_PWD}"
@@ -39,7 +41,7 @@ RUN apt-get update && \
 	docker-php-ext-configure pgsql -with-pgsql=/usr/local/pgsql && \
 	docker-php-ext-install pdo pdo_pgsql pgsql && \
 	docker-php-ext-install -j$(nproc) iconv && \
-    docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ && \
+    docker-php-ext-configure gd --with-freetype=/usr/include/ --with-jpeg=/usr/include/ && \
     docker-php-ext-install -j$(nproc) gd && \
     apt-get clean autoclean && \
     apt-get -y autoremove && \
@@ -114,7 +116,9 @@ RUN sed -i "s/\${POSTGRES_HOST}/saisie-flore-postgres/g" ${APP_PATH}/config.php 
     sed -i "s/\${POSTGRES_DB}/${POSTGRES_DB}/g" ${APP_PATH}/config.php && \
     sed -i "s/\${POSTGRES_USER}/${POSTGRES_USER}/g" ${APP_PATH}/config.php && \
     sed -i "s/\${POSTGRES_PASSWORD}/${POSTGRES_PASSWORD}/g" ${APP_PATH}/config.php && \
-    sed -i "s/\${APP_MAILTO}/${APP_MAILTO}/g" ${APP_PATH}/config.php
+    sed -i "s/\${APP_MAILTO}/${APP_MAILTO}/g" ${APP_PATH}/config.php && \
+    sed -i "s/\${CAP_SECRET_KEY}/${CAP_SECRET_KEY}/g" ${APP_PATH}/config.php && \
+    sed -i "s/\${CAP_SITE_KEY}/${CAP_SITE_KEY}/g" ${APP_PATH}/config.php
 
 # Set max input file size
 RUN sed -i "s/maxFileSize: 2048/maxFileSize: 24576/" ${APP_PATH}/js/init_fileinput.js

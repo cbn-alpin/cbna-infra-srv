@@ -7,6 +7,8 @@ $saisie_flore_config = [
     'db-user' => '${POSTGRES_USER}',
     'db-password' => '${POSTGRES_PASSWORD}',
     'mail-to' => '${APP_MAILTO}',
+    'captcha-secret-key' => '${CAP_SECRET_KEY}',
+    'captcha-site-key' => '${CAP_SITE_KEY}',
 ];
 
 ?>

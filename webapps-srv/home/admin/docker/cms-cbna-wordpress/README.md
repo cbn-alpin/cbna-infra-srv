@@ -33,7 +33,7 @@ Du container vers un dossier local : `docker cp cms-cbna-wordpress:/var/www/html
 
 ## Sauvegarde cms-cbna-wordpress
 
-Script Bash de sauvegarde de l'instance `cms-cbna-wordpress`  
+Script Bash de sauvegarde de l'instance `cms-cbna-wordpress`
 Fonctionne depuis l’hôte, sans modification des conteneurs existants.
 
 Le script effectue :
@@ -41,8 +41,8 @@ Le script effectue :
 - une archive gzip des fichiers applicatifs WordPress (`/var/www/html`)
 - une rotation automatique des sauvegardes (suppression des sauvegardes trop anciennes)
 
-Le conteneur utilisé pour le dump est temporaire et supprimé automatiquement à la fin (`--rm`).  
-Les identifiants de la base sont extraits dynamiquement depuis les variables d’environnement du conteneur MariaDB.  
+Le conteneur utilisé pour le dump est temporaire et supprimé automatiquement à la fin (`--rm`).
+Les identifiants de la base sont extraits dynamiquement depuis les variables d’environnement du conteneur MariaDB.
 Les noms des conteneurs cibles sont définis en haut du script.
 
 ### Structure de sortie
@@ -55,8 +55,8 @@ Contenu :
 
 ### Prérequis
 
-- Docker installé sur l’hôte  
-- Accès à un conteneur MariaDB exposant les variables `MARIADB_USER` et `MARIADB_PASSWORD`  
-- Accès réseau entre l’hôte du dump et le conteneur base de données (`--network container:<nom_du_conteneur>`)  
+- Docker installé sur l’hôte
+- Accès à un conteneur MariaDB exposant les variables `MARIADB_USER` et `MARIADB_PASSWORD`
+- Accès réseau entre l’hôte du dump et le conteneur base de données (`--network container:<nom_du_conteneur>`)
 - Droits suffisants pour exécuter `docker exec`, `docker cp` et `docker run --rm`
 

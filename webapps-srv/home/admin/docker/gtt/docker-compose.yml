@@ -107,7 +107,7 @@ services:
     volumes:
       - config-api-storage:/home/app/web/config/
       - logs-api-storage:/var/logs/
-      - ./gtt-api/migrations/data/default_users.csv:/home/app/web/migrations/data/default_users.csv
+      - ./gtt-api/migrations/data/:/home/app/web/migrations/data/
 
   gtt-webapp:
     image: cbna/gtt-webapp:latest
@@ -125,7 +125,7 @@ services:
     env_file:
       - .env.webapp
     healthcheck:
-      test: curl --fail --silent http://localhost:8080/ || exit 1
+      test: curl --fail --silent http://localhost:80/ || exit 1
       interval: 10s
       timeout: 10s
       retries: 3

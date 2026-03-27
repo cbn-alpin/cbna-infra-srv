@@ -58,6 +58,11 @@ a, a:hover, .btn-link, .btn-link:active, .btn-link:focus, .btn-link:hover {
   color: #fff;
   box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.26);
 }
+#yw-topnav.fixable {
+    position: sticky;
+    top: 0;
+    z-index:10;
+}
 .yw-fixed #yw-topnav, .yw-responsive #yw-topnav {
   margin: 0 -15px 15px; /*marge negative pour compenser le conteneur principal*/
 }

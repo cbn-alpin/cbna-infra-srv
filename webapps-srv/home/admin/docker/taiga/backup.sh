@@ -19,7 +19,7 @@ repertoire_sauvegarde="/home/admin/docker/taiga/backups"
 date_du_jour=$(date +%F)
 dossier_cible="${repertoire_sauvegarde}/${date_du_jour}_${nom_sauvegarde}"
 dossier_temporaire="${dossier_cible}/tmp"
-retenue_jours=2
+retenue_jours=1
 
 # conteneurs utilisés
 conteneur_bdd="taiga-taiga-db-1"

@@ -1,4 +1,6 @@
-FROM php:7.3.33-fpm-bullseye
+FROM php:8.3.30-fpm-trixie
+# Docker PHP: https://hub.docker.com/_/php
+# Sources:https://yeswiki.net/archive/?DocumentationMiseAJour
 
 LABEL maintainer "Jean-Pascal MILCENT <jpm@clapas.org>"
 
@@ -31,13 +33,14 @@ RUN apt-get update && \
 		libfcgi-bin \
 		libfreetype6-dev \
 		libjpeg62-turbo-dev \
-		libpng-dev && \
+		libpng-dev \
+		libonig-dev && \
 	docker-php-ext-install -j$(nproc) iconv && \
-	docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ && \
+	docker-php-ext-configure gd --with-freetype=/usr/include/ --with-jpeg=/usr/include/ && \
 	docker-php-ext-install -j$(nproc) gd && \
 	docker-php-ext-install mysqli && \
 	docker-php-ext-enable mysqli && \
-	docker-php-ext-install mbstring && \
+	docker-php-ext-install -j$(nproc) mbstring && \
 	docker-php-ext-install exif && \
 	docker-php-ext-install zip && \
 	apt-get clean autoclean && \
@@ -47,6 +50,8 @@ RUN apt-get update && \
 
 # Use the default production configuration
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
+# Override upload properties to php.ini
+COPY custom.ini ${PHP_INI_DIR}/conf.d/
 
 # Add /etc/vim/vimrc.local
 RUN echo "runtime! defaults.vim" > /etc/vim/vimrc.local \
@@ -79,6 +84,7 @@ RUN rm -rf ${HTML_PATH} && unzip yeswiki.zip && rm yeswiki.zip && mv ${YW_VERSIO
 
 
 # Set YesWiki configuration file
+# Update manualy the Yeswiki version in wakka.config.php file
 COPY ./wakka.config.php ${HTML_PATH}/wakka.config.php
 RUN sed -i "s/\${MARIADB_DB}/${MARIADB_DB}/g" ${HTML_PATH}/wakka.config.php && \
 	sed -i "s/\${MARIADB_USER}/${MARIADB_USER}/g" ${HTML_PATH}/wakka.config.php && \
@@ -90,6 +96,7 @@ RUN sed -i "s/\${MARIADB_DB}/${MARIADB_DB}/g" ${HTML_PATH}/wakka.config.php && \
 
 # Manage backups
 # Copy and unzip content of .tar.bz2 files. Use "*.tar.bz" to avoid error if not exists.
+# Directories to restore are : custom, files, map, media, photos.
 ADD ${YW_BACKUP_DATE}_backup_files_jardinalp_*.tar.bz2 ${HTML_PATH}/
 # Copy content of ./themes directorys. Use "...[s]" to avoid error if not exists.
 ADD ./theme[s] ${HTML_PATH}/themes/

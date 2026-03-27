@@ -1,7 +1,7 @@
-FROM php:8.1.22-fpm-bookworm
+FROM php:8.4.18-fpm-trixie
 
 LABEL author="Jean-Pascal MILCENT" \
-  version="1.3" \
+  version="1.4" \
   maintainer="jp.milcent@cbn-alpin.fr"
 
 ARG BACKUP_DATE
@@ -10,10 +10,10 @@ ARG GCP_CLIENT_ID
 ARG GCP_CLIENT_SECRET
 ARG GCP_REFRESH_TOKEN
 
-ENV DW_VERSION=2025-05-14a
+ENV DW_VERSION=2025-05-14b
 ENV DW_DOWNLOAD_URL=https://download.dokuwiki.org/src/dokuwiki/dokuwiki-${DW_VERSION}.tgz
 # On local machine, download file and get md5 with : md5sum dokuwiki-${DW_VERSION}.tgz
-ENV DW_MD5_CHECKSUM=b77bd2f74af1fb0d8f57125864caf6a6
+ENV DW_MD5_CHECKSUM=d0c470b5b311e4fee018e4cabbd17afc
 
 ENV HTML_PATH /var/www/html
 

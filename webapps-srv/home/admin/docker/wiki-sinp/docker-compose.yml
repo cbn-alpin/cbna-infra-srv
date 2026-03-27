@@ -1,7 +1,7 @@
 services:
 
   wiki-sinp-nginx:
-    image: nginx:1.24.0-bullseye
+    image: nginx:1.28.2-trixie
     # https://hub.docker.com/_/nginx
     container_name: wiki-sinp-nginx
     restart: unless-stopped
@@ -32,7 +32,7 @@ services:
         MSMTP_OVH_PWD: "${MSMTP_OVH_PWD}"
         GCP_CLIENT_ID: "${GCP_CLIENT_ID}"
         GCP_CLIENT_SECRET: "${GCP_CLIENT_SECRET}"
-    image: cbna/wiki-sinp:dokuwiki-8.1.22-fpm-bookworm
+    image: cbna/wiki-sinp:dokuwiki-8.4.18-fpm-trixie
     # https://hub.docker.com/_/php
     container_name: wiki-sinp-dokuwiki
     environment:

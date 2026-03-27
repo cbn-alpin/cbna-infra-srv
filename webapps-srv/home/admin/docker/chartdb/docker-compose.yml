@@ -5,9 +5,11 @@ x-logging:
     max-size: 4m
     max-file: 10
 
+# TODO: compléter avec cette doc pour voir si débloque des fonctionnalités : https://docs.klutch.sh/guides/open-source-software/chartdb/
+
 services:
   chartdb:
-    image: ghcr.io/chartdb/chartdb:1.10.0
+    image: ghcr.io/chartdb/chartdb:1.19.0
     # https://hub.docker.com/r/shlinkio/shlink
     container_name: chartdb
     hostname: "${HOSTNAME}_chartdb"

@@ -1,4 +1,4 @@
-FROM debian:12.1-slim
+FROM debian:12.13-slim
 # https://hub.docker.com/_/debian
 
 LABEL maintainer "Jean-Pascal MILCENT <jpm@clapas.org>"

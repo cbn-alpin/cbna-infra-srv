@@ -1,4 +1,4 @@
-FROM wordpress:6.3.1-php8.2-fpm
+FROM wordpress:6.9.0-php8.5-fpm
 # https://hub.docker.com/_/wordpress
 
 LABEL maintainer "Jean-Pascal MILCENT <jpm@clapas.org>"

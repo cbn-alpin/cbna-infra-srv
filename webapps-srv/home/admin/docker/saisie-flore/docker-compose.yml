@@ -54,10 +54,12 @@ services:
         APP_REPO: "${APP_REPO}"
         APP_VERSION: "${APP_VERSION}"
         APP_VERSION_CHECKSUM: "${APP_VERSION_CHECKSUM}"
+        CAP_SECRET_KEY: "${CAP_SECRET_KEY}"
+        CAP_SITE_KEY: "${CAP_SITE_KEY}"
         MSMTP_OVH_HOST: "${MSMTP_OVH_HOST}"
         MSMTP_OVH_EMAIL: "${MSMTP_OVH_EMAIL}"
         MSMTP_OVH_PWD: "${MSMTP_OVH_PWD}"
-    image: cbna/saisie-flore-app:php-7.3.33-fpm-bullseye
+    image: cbna/saisie-flore-app:php-8.4.10-fpm-bookworm
     container_name: saisie-flore-php
     hostname: "${HOSTNAME}_saisie-flore-php"
     restart: unless-stopped

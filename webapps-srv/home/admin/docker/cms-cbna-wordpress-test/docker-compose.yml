@@ -1,5 +1,3 @@
-version: "3.9"
-
 x-logging:
   &default-logging
   driver: "json-file"
@@ -14,7 +12,7 @@ x-depends_on:
 
 services:
   cms-cbna-test-nginx:
-    image: nginx:1.24.0-bullseye
+    image: nginx:1.28.1-trixie
     # https://hub.docker.com/_/nginx
     container_name: cms-cbna-test-nginx
     hostname: "${HOSTNAME}_cms-cbna-test-nginx"
@@ -48,7 +46,7 @@ services:
       args:
         TZ: ${TZ:-Europe/Paris}
         WP_BACKUP_DATE: ${WP_BACKUP_DATE-"None"}
-    image: cbna/cms-test-wordpress:wordpress-6.3.1-php8.2-fpm
+    image: cbna/cms-test-wordpress:wordpress-6.9.0-php8.5-fpm
     # https://hub.docker.com/_/wordpress
     container_name: cms-cbna-test-wordpress
     hostname: "${HOSTNAME}_cms-cbna-test-wordpress"
@@ -84,7 +82,7 @@ services:
     # - change site Scheme (http => https) :
     #   `docker compose run --rm cms-cbna-wp-cli wp option update home 'https://test-wp.cbn-alpin.fr'`
     #   `docker compose run --rm cms-cbna-wp-cli wp option update siteurl 'https://test-wp.cbn-alpin.fr'`
-    image : wordpress:cli-2.8.1-php8.2
+    image : wordpress:cli-2.12.0-php8.5
     # https://hub.docker.com/_/wordpress
     container_name: cms-cbna-test-wp-cli
     hostname: "${HOSTNAME}_cms-cbna-test-wp-cli"
@@ -106,7 +104,7 @@ services:
       - ./backups:/backups
 
   cms-cbna-test-mariadb:
-    image: mariadb:11.1.2-jammy
+    image: mariadb:12.1.2-noble
     # https://hub.docker.com/_/mariadb
     container_name: cms-cbna-test-mariadb
     hostname: "${HOSTNAME}_cms-cbna-test-mariadb"
@@ -132,7 +130,7 @@ services:
       - ./mariadb/initdb.d/:/docker-entrypoint-initdb.d/
 
   cms-cbna-test-adminer:
-    image: adminer:4.8.1-standalone
+    image: adminer:5.4.1-standalone
     # https://hub.docker.com/_/adminer
     container_name: cms-cbna-test-adminer
     hostname: "${HOSTNAME}_cms-cbna-test-adminer"
@@ -147,33 +145,33 @@ services:
       ADMINER_DESIGN: lucas-sandery
       ADMINER_DEFAULT_SERVER: cms-cbna-test-mariadb
 
-  cms-cbna-test-backup-cron:
-    build:
-      context: ./cron/build
-      dockerfile: Dockerfile
-      args:
-        TZ: ${TZ:-Europe/Paris}
-        MARIADB_REPO_SETUP_CHECKSUM: ${MARIADB_REPO_SETUP_CHECKSUM}
-        HOST_USER_NAME: ${HOST_USER_NAME}
-        HOST_USER_ID: ${HOST_USER_ID}
-        HOST_GROUP_ID: ${HOST_GROUP_ID}
-    image: cbna/cms-test-backup-cron:debian-12.1-slim
-    container_name: cms-cbna-test-backup-cron
-    hostname: "${HOSTNAME}_cms-cbna-test-backup-cron"
-    restart: unless-stopped
-    depends_on: *default-depends_on
-    environment:
-      TZ: ${TZ:-Europe/Paris}
-      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
-      WORDPRESS_DB_HOST: cms-cbna-test-mariadb:3306
-      WORDPRESS_DB_NAME: ${MARIADB_DB}
-      WORDPRESS_DB_USER: ${MARIADB_USER}
-      WORDPRESS_DB_PASSWORD: ${MARIADB_PASSWORD}
-      WORDPRESS_TABLE_PREFIX: ${WP_TABLE_PREFIX}
-    logging: *default-logging
-    volumes:
-        - wordpress-cbna-cms-storage:/var/www/html
-        - ./backups:/backups
+  #cms-cbna-test-backup-cron:
+  #  build:
+  #    context: ./cron/build
+  #    dockerfile: Dockerfile
+  #    args:
+  #      TZ: ${TZ:-Europe/Paris}
+  #      MARIADB_REPO_SETUP_CHECKSUM: ${MARIADB_REPO_SETUP_CHECKSUM}
+  #      HOST_USER_NAME: ${HOST_USER_NAME}
+  #      HOST_USER_ID: ${HOST_USER_ID}
+  #      HOST_GROUP_ID: ${HOST_GROUP_ID}
+  # image: cbna/cms-test-backup-cron:debian-12.13-slim
+  #  container_name: cms-cbna-test-backup-cron
+  # hostname: "${HOSTNAME}_cms-cbna-test-backup-cron"
+  #  restart: unless-stopped
+  #  depends_on: *default-depends_on
+  #  environment:
+  #    TZ: ${TZ:-Europe/Paris}
+  #    MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+  #    WORDPRESS_DB_HOST: cms-cbna-test-mariadb:3306
+  #    WORDPRESS_DB_NAME: ${MARIADB_DB}
+  #    WORDPRESS_DB_USER: ${MARIADB_USER}
+  #    WORDPRESS_DB_PASSWORD: ${MARIADB_PASSWORD}
+  #    WORDPRESS_TABLE_PREFIX: ${WP_TABLE_PREFIX}
+  #  logging: *default-logging
+  #  volumes:
+  #      - wordpress-cbna-cms-storage:/var/www/html
+  #      - ./backups:/backups
 
 volumes:
   db-cbna-cms-storage:

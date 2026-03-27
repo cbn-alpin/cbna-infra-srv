@@ -54,7 +54,11 @@ services:
         YW_VERSION_NAME: "${YW_VERSION_NAME}"
         YW_VERSION_CODE: "${YW_VERSION_CODE}"
         YW_VERSION_CHECKSUM: "${YW_VERSION_CHECKSUM}"
-    image: yeswiki:cercopitheque
+    image: yeswiki:doryphore
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
     container_name: wiki-jardinalp-php
     hostname: "${HOSTNAME}_wiki-jardinalp-php"
     restart: unless-stopped
@@ -69,7 +73,7 @@ services:
       #- ./yeswiki/themes:/var/www/html/themes
 
   wiki-jardinalp-mariadb:
-    image: mariadb:11.1.2-jammy
+    image: mariadb:12.2.2-noble
     # https://hub.docker.com/_/mariadb
     container_name: wiki-jardinalp-mariadb
     hostname: "${HOSTNAME}_wiki-jardinalp-mariadb"
@@ -96,7 +100,7 @@ services:
       - ./backups/:/backups/
 
   wiki-jardinalp-adminer:
-    image: adminer:4.8.1-standalone
+    image: adminer:5.4.2-standalone
     # https://hub.docker.com/_/adminer
     container_name: wiki-jardinalp-adminer
     hostname: "${HOSTNAME}_wiki-jardinalp-adminer"

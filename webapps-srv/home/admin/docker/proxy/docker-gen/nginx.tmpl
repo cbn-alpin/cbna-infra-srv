@@ -532,6 +532,10 @@ server {
     {{- if $server_tokens }}
     server_tokens {{ $server_tokens }};
     {{- end }}
+
+    limit_req zone=blacklisted_zone burst=1;
+    limit_req zone=main_zone burst=250 delay=200;
+
     {{ $globals.access_log }}
     {{- if or (eq $https_method "nohttps") (not $cert_ok) (eq $https_method "noredirect") }}
     listen {{ $globals.external_http_port }} {{ $default_server }};
@@ -560,8 +564,8 @@ server {
             {{- end }}
 
             {{- if (exists (printf "/etc/nginx/certs/%s.chain.pem" $cert)) }}
-    ssl_stapling on;
-    ssl_stapling_verify on;
+    ssl_stapling off;
+    ssl_stapling_verify off;
     ssl_trusted_certificate {{ printf "/etc/nginx/certs/%s.chain.pem" $cert }};
             {{- end }}
 

@@ -19,7 +19,7 @@ repertoire_sauvegarde="/home/admin/docker/wiki-jardinalp/backups"
 date_du_jour=$(date +%F)
 dossier_cible="${repertoire_sauvegarde}/${date_du_jour}_${nom_sauvegarde}"
 dossier_temporaire="${dossier_cible}/tmp"
-retenue_jours=2
+retenue_jours=1
 
 # conteneurs utilisés
 conteneur_bdd="wiki-jardinalp-mariadb"
@@ -125,7 +125,9 @@ echo ""
 # DEBUG : désactivation temporaire du mode "exit on error" pour éviter les arrêts silencieux
 set +e
 
-for dossier in "${repertoire_sauvegarde}/"[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]_"${nom_sauvegarde}"; do
+#for dossier in "${repertoire_sauvegarde}/"[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]_"${nom_sauvegarde}"; do
+shopt -s nullglob
+for dossier in ${repertoire_sauvegarde}/????-??-??_"${nom_sauvegarde}"; do
     if [ -d "${dossier}" ]; then
         dossier_base=$(basename "${dossier}")
         dossier_date=$(echo "${dossier_base}" | grep -Eo '^[0-9]{4}-[0-9]{2}-[0-9]{2}')

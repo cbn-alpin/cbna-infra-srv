@@ -1,16 +1,16 @@
-FROM php:8.1.22-fpm-bookworm
+FROM php:8.4.18-fpm-trixie
 
 LABEL author="Jean-Pascal MILCENT" \
-  version="1.3" \
+  version="1.4" \
   maintainer="jp.milcent@cbn-alpin.fr"
 
 ARG BACKUP_DATE
 ARG MSMTP_OVH_PWD
 
-ENV DW_VERSION=2025-05-14a
+ENV DW_VERSION=2025-05-14b
 ENV DW_DOWNLOAD_URL=https://download.dokuwiki.org/src/dokuwiki/dokuwiki-${DW_VERSION}.tgz
 # On local machine, download file and get md5 with : md5sum dokuwiki-${DW_VERSION}.tgz
-ENV DW_MD5_CHECKSUM=b77bd2f74af1fb0d8f57125864caf6a6
+ENV DW_MD5_CHECKSUM=d0c470b5b311e4fee018e4cabbd17afc
 
 ENV HTML_PATH /var/www/html
 
@@ -67,9 +67,9 @@ RUN rm -f dokuwiki.tgz
 
 RUN 'cp' -af dokuwiki-${DW_VERSION}/* ${HTML_PATH}/
 #RUN rm -fR dokuwiki-${DW_VERSION}/
-ADD ./${BACKUP_DATE}_wiki-intranet_conf_pages.tar.bz2 ${HTML_PATH}
-ADD ./${BACKUP_DATE}_wiki-intranet_media.tar.bz2 ${HTML_PATH}
-ADD ./${BACKUP_DATE}_wiki-intranet_plugins_templates.tar.bz2 ${HTML_PATH}
+ADD ./${BACKUP_DATE}_wiki-intranet_backup.tar.bz2 ${HTML_PATH}
+#ADD ./${BACKUP_DATE}_wiki-intranet_media.tar.bz2 ${HTML_PATH}
+#ADD ./${BACKUP_DATE}_wiki-intranet_plugins_templates.tar.bz2 ${HTML_PATH}
 RUN chown -R www-data: ${HTML_PATH}
 
 # Copy entrypoint script. Entypoint script upgade Dokuwiki files in named Volume

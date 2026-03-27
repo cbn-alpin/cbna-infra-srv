@@ -16,7 +16,7 @@ repertoire_sauvegarde="/home/admin/docker/gefiproj/backups"
 date_du_jour=$(date +%F)
 dossier_cible="${repertoire_sauvegarde}/${date_du_jour}_${nom_sauvegarde}"
 dossier_temporaire="${dossier_cible}/tmp"
-retenue_jours=2
+retenue_jours=1
 
 conteneur_bdd="gefiproj-postgres"
 conteneur_api="gefiproj-api"

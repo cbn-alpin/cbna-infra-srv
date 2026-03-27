@@ -1,5 +1,3 @@
-version: "3.9"
-
 x-depends_on:
   &default-depends_on
   gefiproj-postgres:
